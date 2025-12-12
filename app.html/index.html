@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathFinder Pro (Full 250 Questions)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CORE STYLES --- */
+        :root { --primary: #4f46e5; --bg: #f3f4f6; --text: #1f2937; --success: #10b981; --border: #e5e7eb; --white: #ffffff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: var(--bg); color: var(--text); height: 100vh; display: flex; overflow: hidden; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background: var(--white); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px; flex-shrink: 0; }
+        .logo { font-size: 1.4rem; font-weight: 800; color: var(--primary); margin-bottom: 30px; }
+        .nav-btn { padding: 12px 15px; margin-bottom: 5px; border-radius: 8px; cursor: pointer; color: #6b7280; font-weight: 500; transition: 0.2s; }
+        .nav-btn:hover { background: #f9fafb; color: var(--primary); }
+        .nav-btn.active { background: #eef2ff; color: var(--primary); font-weight: 600; }
+        
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .view-section { display: none; height: 100%; width: 100%; overflow-y: auto; padding: 30px; }
+        .view-section.active { display: block; }
+
+        /* Dashboard */
+        .stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 30px; }
+        .stat-card { background: var(--white); padding: 20px; border-radius: 12px; border: 1px solid var(--border); }
+        .stat-val { font-size: 1.8rem; font-weight: 700; }
+        
+        .tab-container { display: flex; gap: 10px; margin-bottom: 20px; overflow-x: auto; padding-bottom: 5px; border-bottom: 1px solid var(--border); }
+        .tab-btn { padding: 8px 20px; background: white; border: 1px solid var(--border); border-radius: 20px; cursor: pointer; white-space: nowrap; font-weight: 500; color: #6b7280; transition: 0.2s; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .q-card { background: var(--white); padding: 20px; border-radius: 12px; margin-bottom: 15px; border: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .q-card:hover { transform: translateY(-2px); border-color: #a5b4fc; }
+        .q-card.read { border-left: 5px solid var(--success); background: #f0fdf4; }
+        .answer-text { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); color: #4b5563; line-height: 1.6; }
+        .q-card.open .answer-text { display: block; }
+
+        /* Mock Test */
+        .mock-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .mock-card { background: var(--white); padding: 25px; border-radius: 12px; border: 1px solid var(--border); text-align: center; cursor: pointer; transition: 0.2s; }
+        .mock-card:hover { border-color: var(--primary); transform: translateY(-3px); }
+        
+        .exam-layout { display: flex; height: 100%; gap: 20px; }
+        .exam-main { flex: 1; background: var(--white); border-radius: 16px; padding: 40px; border: 1px solid var(--border); display: flex; flex-direction: column; overflow-y: auto; }
+        .exam-sidebar { width: 280px; background: var(--white); border-radius: 16px; border: 1px solid var(--border); padding: 20px; flex-shrink: 0; }
+
+        .option-card { padding: 15px; border: 2px solid var(--border); border-radius: 8px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; background: white; }
+        .option-card:hover { background: #f9fafb; border-color: #a5b4fc; }
+        .option-card.selected { border-color: var(--primary); background: #eef2ff; font-weight: 600; }
+        
+        .palette-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 20px; }
+        .q-num { height: 40px; width: 40px; border-radius: 8px; background: #f3f4f6; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .q-num.active { border: 2px solid var(--primary); }
+        .q-num.answered { background: var(--primary); color: white; }
+
+        .btn { padding: 10px 20px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; background: var(--primary); color: white; }
+        .btn-outline { background: transparent; border: 2px solid var(--border); color: #4b5563; }
+        
+        /* History Table */
+        .history-table { width: 100%; border-collapse: collapse; background: white; margin-top:10px; }
+        .history-table th, .history-table td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); }
+    </style>
+</head>
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">🔥 Path<span style="color:#1f2937">Finder</span></div>
+        <div class="nav-btn active" onclick="showView('dashboard', this)">📊 Dashboard</div>
+        <div class="nav-btn" onclick="showView('mock-select', this)">📝 Mock Tests</div>
+        <div class="nav-btn" onclick="showView('history', this)">🏆 My History</div>
+    </aside>
+
+    <main class="main-content">
+        <div id="view-dashboard" class="view-section active">
+            <h2>Your Cloud Progress</h2>
+            <div class="stat-grid">
+                <div class="stat-card"><div>Questions Read</div><div class="stat-val" id="dispRead">Loading...</div></div>
+                <div class="stat-card"><div>Searches Made</div><div class="stat-val" id="dispSearch">Loading...</div></div>
+                <div class="stat-card"><div>Tests Taken</div><div class="stat-val" id="dispTests">Loading...</div></div>
+            </div>
+
+            <input type="text" placeholder="Search (e.g. 'Hooks', 'Weakness', 'SQL')..." onkeyup="handleSearch(event)" style="width:100%; padding:15px; border-radius:8px; border:1px solid #e5e7eb; margin-bottom:20px;">
+            
+            <div class="tab-container">
+                <button class="tab-btn active" onclick="renderStudyList('hr', this)">🤝 HR</button>
+                <button class="tab-btn" onclick="renderStudyList('react', this)">⚛️ React</button>
+                <button class="tab-btn" onclick="renderStudyList('node', this)">🟢 Node</button>
+                <button class="tab-btn" onclick="renderStudyList('sql', this)">🗄️ SQL</button>
+                <button class="tab-btn" onclick="renderStudyList('pharma', this)">💊 Pharma</button>
+            </div>
+
+            <div id="studyContainer"></div>
+        </div>
+
+        <div id="view-mock-select" class="view-section">
+            <h2>Select a Topic (Random 10 Questions)</h2>
+            <div class="mock-grid">
+                <div class="mock-card" onclick="startExam('hr')"><h3>🤝 HR Round</h3></div>
+                <div class="mock-card" onclick="startExam('react')"><h3>⚛️ React JS</h3></div>
+                <div class="mock-card" onclick="startExam('node')"><h3>🟢 Node JS</h3></div>
+                <div class="mock-card" onclick="startExam('sql')"><h3>🗄️ SQL DB</h3></div>
+                <div class="mock-card" onclick="startExam('pharma')"><h3>💊 Pharma</h3></div>
+            </div>
+        </div>
+
+        <div id="view-exam" class="view-section" style="background:#f9fafb;">
+            <div class="exam-layout">
+                <div class="exam-main">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                        <h3 id="examSubject">Subject</h3>
+                        <span style="background:#fee2e2; color:#dc2626; padding:5px 12px; border-radius:20px; font-weight:700;">⏱️ <span id="timer">10:00</span></span>
+                    </div>
+                    <div id="qContainer">
+                        <div id="qText" style="font-size:1.2rem; font-weight:bold; margin:20px 0;">...</div>
+                        <div id="optionsBox"></div>
+                    </div>
+                    <div style="margin-top:30px; display:flex; justify-content:space-between;">
+                        <button class="btn btn-outline" onclick="prevQ()">Prev</button>
+                        <button class="btn" onclick="nextQ()" id="btnNext">Next</button>
+                        <button class="btn" onclick="submitExam()" id="btnSubmit" style="display:none; background:#10b981;">Submit Test</button>
+                    </div>
+                </div>
+                <div class="exam-sidebar">
+                    <h4>Question Palette</h4>
+                    <div class="palette-grid" id="paletteBox"></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-history" class="view-section">
+            <h2>Your Test History</h2>
+            <div id="historyList">Loading history...</div>
+        </div>
+    </main>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, updateDoc, arrayUnion, increment } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDZNrWYI9BwQiI35Qqs_D-MWqnXbS1BspY",
+            authDomain: "path-finder-3d3ec.firebaseapp.com",
+            projectId: "path-finder-3d3ec",
+            storageBucket: "path-finder-3d3ec.firebasestorage.app",
+            messagingSenderId: "190111819092",
+            appId: "1:190111819092:web:5052afbe7a0e3fcc7514c1",
+            measurementId: "G-Y98CFSQKEV"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const userID = "student_01"; 
+
+        async function loadUserData() {
+            try {
+                const docRef = doc(db, "users", userID);
+                const docSnap = await getDoc(docRef);
+                if (docSnap.exists()) updateUI(docSnap.data());
+                else await setDoc(docRef, { questionsRead: 0, searchesMade: 0, testsTaken: 0, history: [] });
+            } catch(e) { console.error(e); }
+        }
+
+        async function saveToCloud(field, value, isArray = false) {
+            const docRef = doc(db, "users", userID);
+            if(isArray) await updateDoc(docRef, { [field]: arrayUnion(value) });
+            else await updateDoc(docRef, { [field]: increment(value) });
+            loadUserData();
+        }
+
+        function updateUI(data) {
+            document.getElementById('dispRead').innerText = data.questionsRead || 0;
+            document.getElementById('dispSearch').innerText = data.searchesMade || 0;
+            document.getElementById('dispTests').innerText = data.testsTaken || 0;
+            const hDiv = document.getElementById('historyList');
+            if(!data.history || data.history.length === 0) hDiv.innerHTML = "<p>No tests taken yet.</p>";
+            else hDiv.innerHTML = data.history.reverse().map(h => 
+                `<div style="padding:15px; border-bottom:1px solid #ddd;"><b>${h.subject}</b> - Score: ${h.score}% <span style="float:right">${h.date}</span></div>`
+            ).join('');
+        }
+
+        window.handleSearch = (e) => {
+             const query = e.target.value.toLowerCase();
+             document.querySelectorAll('.q-card').forEach(card => {
+                 card.style.display = card.innerText.toLowerCase().includes(query) ? 'block' : 'none';
+             });
+             if(e.keyCode === 13 && query.length > 0) {
+                 saveToCloud("searchesMade", 1);
+                 alert("Search Counted in DB!");
+             }
+        };
+        
+        window.trackRead = (el) => {
+            if(!el.classList.contains('read')) {
+                el.classList.add('read');
+                saveToCloud("questionsRead", 1);
+            }
+            el.classList.toggle('open');
+        };
+
+        window.submitExamResult = (subject, score) => {
+            saveToCloud("testsTaken", 1);
+            saveToCloud("history", { subject, score, date: new Date().toLocaleDateString() }, true);
+            alert(`Test Submitted! Score: ${score}%`);
+        };
+
+        loadUserData();
+    </script>
+
+    <script>
+        const studyDB = {
+            hr: [
+                {q: "Tell me about yourself.", a: "Brief professional summary, skills, and background."},
+                {q: "What are your strengths?", a: "Consistency, Problem-solving, Adaptability."},
+                {q: "What are your weaknesses?", a: "I focus too much on details, but I use checklists to manage time."},
+                {q: "Why do you want to join us?", a: "Aligns with my career goals and company reputation."},
+                {q: "Where do you see yourself in 5 years?", a: "In a managerial role leading a team."},
+                {q: "Why should we hire you?", a: "I have the right skills and passion for this role."},
+                {q: "Describe a challenge you faced.", a: "Handled a strict deadline by prioritizing tasks."},
+                {q: "What motivates you?", a: "Learning new technologies and solving problems."},
+                {q: "What demotivates you?", a: "Lack of clear instructions or teamwork."},
+                {q: "Biggest achievement?", a: "Successfully led a college project to completion."},
+                {q: "How do you handle stress?", a: "I take short breaks and prioritize tasks."},
+                {q: "Are you a team player?", a: "Yes, I enjoy collaborating and sharing ideas."},
+                {q: "Describe your leadership style.", a: "Supportive and result-oriented."},
+                {q: "Have you ever failed?", a: "Yes, I missed a deadline once but learned time management."},
+                {q: "How do you handle conflict?", a: "I listen to both sides and find a neutral solution."},
+                {q: "Are you willing to relocate?", a: "Yes, I am open to moving for the right opportunity."},
+                {q: "Can you work under pressure?", a: "Yes, it helps me stay focused."},
+                {q: "What is your salary expectation?", a: "As per industry standards and company norms."},
+                {q: "Why did you leave your last job?", a: "Looking for better growth opportunities."},
+                {q: "What do you know about our company?", a: "Researched your products and market standing."},
+                {q: "Do you have any questions for us?", a: "What does a typical day look like in this role?"},
+                {q: "What makes you unique?", a: "My combination of technical skills and soft skills."},
+                {q: "How do you prioritize work?", a: "Using the Eisenhower Matrix (Urgent vs Important)."},
+                {q: "What are your hobbies?", a: "Reading tech blogs and playing chess."},
+                {q: "Who is your role model?", a: "Someone who inspires me to work hard."},
+                {q: "Are you willing to work overtime?", a: "If the project demands it, yes."},
+                {q: "How do you handle criticism?", a: "I take it constructively to improve."},
+                {q: "Describe a time you showed initiative.", a: "Suggested a new tool that saved time."},
+                {q: "What is your ideal work environment?", a: "Collaborative and innovative."},
+                {q: "Do you prefer working alone or in a team?", a: "I am flexible with both."},
+                {q: "How quickly do you adapt to new tech?", a: "Very quickly, I love learning."},
+                {q: "What is your dream job?", a: "One where I can impact people positively."},
+                {q: "How do you define success?", a: "Achieving goals and continuous improvement."},
+                {q: "What irritates you about co-workers?", a: "Negativity, but I try to ignore it."},
+                {q: "Are you organized?", a: "Yes, I use planners and to-do lists."},
+                {q: "How do you make decisions?", a: "Based on data and logic."},
+                {q: "What was your biggest mistake?", a: "Trusting wrong data once, now I double check."},
+                {q: "How do you stay motivated?", a: "By setting small milestones."},
+                {q: "What are your career goals?", a: "To become an expert in my field."},
+                {q: "Explain a gap in your resume.", a: "I took time to upskill/learn new technologies."},
+                {q: "How do you handle angry clients?", a: "Listen, apologize, and solve their issue."},
+                {q: "What does integrity mean to you?", a: "Doing the right thing when no one is watching."},
+                {q: "Are you a risk taker?", a: "Calculated risks, yes."},
+                {q: "How do you handle repetitive tasks?", a: "I try to automate or make them efficient."},
+                {q: "What software tools do you know?", a: "List your technical stack here."},
+                {q: "Do you lie?", a: "I believe in honesty and transparency."},
+                {q: "How do you deal with change?", a: "I embrace it as an opportunity."},
+                {q: "Rate your communication skills.", a: "8/10, always room for improvement."},
+                {q: "What is your notice period?", a: "Immediate joiner / 1 month."},
+                {q: "Any final words?", a: "Thank you for the opportunity."}
+            ],
+            react: [
+                {q: "What is React?", a: "A JavaScript library for building user interfaces."},
+                {q: "What is JSX?", a: "Syntax extension for JavaScript (HTML in JS)."},
+                {q: "What is Virtual DOM?", a: "Lightweight copy of the real DOM for performance."},
+                {q: "What are components?", a: "Reusable building blocks of UI."},
+                {q: "Difference between Class and Functional components?", a: "Class uses 'this' & lifecycle methods; Functional uses Hooks."},
+                {q: "What are Props?", a: "Read-only data passed from parent to child."},
+                {q: "What is State?", a: "Internal mutable data of a component."},
+                {q: "What is useState?", a: "Hook to manage state in functional components."},
+                {q: "What is useEffect?", a: "Hook to handle side effects (API calls, subscriptions)."},
+                {q: "What is useContext?", a: "Hook to access global data without prop drilling."},
+                {q: "What is useRef?", a: "Hook to access DOM elements directly."},
+                {q: "What is useReducer?", a: "Hook for complex state logic (like Redux)."},
+                {q: "What is useMemo?", a: "Hook to memoize expensive calculations."},
+                {q: "What is useCallback?", a: "Hook to memoize functions."},
+                {q: "What is Prop Drilling?", a: "Passing data through multiple levels of components."},
+                {q: "What is Context API?", a: "Built-in way to share state globally."},
+                {q: "What is Redux?", a: "Third-party state management library."},
+                {q: "What is a Higher-Order Component (HOC)?", a: "Function taking a component and returning a new one."},
+                {q: "What are React Fragments?", a: "Wrapper to group elements without adding extra DOM nodes."},
+                {q: "What is the key prop?", a: "Unique ID to help React identify changed items in lists."},
+                {q: "What is Conditional Rendering?", a: "Rendering components based on a condition (if/else, ternary)."},
+                {q: "What is Lifecycle?", a: "Mounting, Updating, Unmounting phases."},
+                {q: "What is Unidirectional Data Flow?", a: "Data flows one way: Parent to Child."},
+                {q: "What is Lift State Up?", a: "Moving state to a common ancestor to share data."},
+                {q: "What is Controlled Component?", a: "Form input controlled by React state."},
+                {q: "What is Uncontrolled Component?", a: "Form input handled by DOM (useRef)."},
+                {q: "What is React Router?", a: "Library for navigation in SPA."},
+                {q: "Difference between Link and anchor tag?", a: "Link prevents page reload; anchor reloads page."},
+                {q: "What is Lazy Loading?", a: "Loading components only when needed (Code Splitting)."},
+                {q: "What is Suspense?", a: "Wrapper to show fallback while loading lazy components."},
+                {q: "What is StrictMode?", a: "Tool for highlighting potential problems in app."},
+                {q: "What are Hooks rules?", a: "Call at top level, only in React functions."},
+                {q: "What is Custom Hook?", a: "User-defined hook to reuse logic."},
+                {q: "What is Reconciliation?", a: "React's diffing algorithm to update DOM."},
+                {q: "What is Pure Component?", a: "Component that re-renders only if props/state change."},
+                {q: "What is React.memo?", a: "HOC to memoize functional components."},
+                {q: "What is Portal?", a: "Render children into a DOM node outside parent hierarchy."},
+                {q: "What is Error Boundary?", a: "Catches JavaScript errors in child components."},
+                {q: "What is SSR?", a: "Server-Side Rendering (Next.js uses this)."},
+                {q: "What is CSR?", a: "Client-Side Rendering (Standard React)."},
+                {q: "What is Hydration?", a: "Attaching React event listeners to server HTML."},
+                {q: "What is npm?", a: "Node Package Manager."},
+                {q: "What is package.json?", a: "Manifest file with dependencies and scripts."},
+                {q: "Difference between npx and npm?", a: "npm installs; npx executes binaries."},
+                {q: "What is Webpack?", a: "Module bundler for JS applications."},
+                {q: "What is Babel?", a: "Transpiler (ES6/JSX to older JS)."},
+                {q: "How to optimize React app?", a: "Use memo, lazy load, optimize images."},
+                {q: "What is ForwardRef?", a: "Passing ref to a child component."},
+                {q: "What is Synthetic Event?", a: "Cross-browser wrapper around native events."},
+                {q: "What is Jest?", a: "Testing framework for React."}
+            ],
+            node: [
+                {q: "What is Node.js?", a: "JS runtime built on Chrome's V8 engine."},
+                {q: "Is Node single-threaded?", a: "Yes, but uses Event Loop for concurrency."},
+                {q: "What is Event Loop?", a: "Mechanism to handle non-blocking I/O operations."},
+                {q: "What is NPM?", a: "Node Package Manager."},
+                {q: "What is package.json?", a: "File containing metadata and dependencies."},
+                {q: "What is REPL?", a: "Read-Eval-Print Loop shell."},
+                {q: "What is Callback?", a: "Function passed as argument to execute later."},
+                {q: "What is Callback Hell?", a: "Deeply nested callbacks making code unreadable."},
+                {q: "What is Promise?", a: "Object representing async operation completion."},
+                {q: "What is Async/Await?", a: "Syntactic sugar for handling Promises."},
+                {q: "What is Express.js?", a: "Minimal web framework for Node."},
+                {q: "What is Middleware?", a: "Function executing between request and response."},
+                {q: "Difference between require and import?", a: "CommonJS vs ES6 Modules."},
+                {q: "What is module.exports?", a: "Object meant to be exported from a module."},
+                {q: "What is Global Object?", a: "Objects available everywhere (console, process)."},
+                {q: "What is Process object?", a: "Provides info about current Node process."},
+                {q: "What is Buffer?", a: "Temporary memory for raw binary data."},
+                {q: "What is Stream?", a: "Handling data flow chunk by chunk."},
+                {q: "Types of Streams?", a: "Readable, Writable, Duplex, Transform."},
+                {q: "What is EventEmitter?", a: "Class to handle events in Node."},
+                {q: "What is fs module?", a: "File System module to read/write files."},
+                {q: "What is http module?", a: "Module to create server."},
+                {q: "What is path module?", a: "Utilities for file paths."},
+                {q: "What is os module?", a: "Info about operating system."},
+                {q: "What is Cluster?", a: "Using multi-core systems in Node."},
+                {q: "What is Worker Threads?", a: "Running CPU intensive tasks in parallel."},
+                {q: "What is REST API?", a: "Representational State Transfer architecture."},
+                {q: "HTTP Methods?", a: "GET, POST, PUT, DELETE, PATCH."},
+                {q: "Status Code 200?", a: "OK / Success."},
+                {q: "Status Code 404?", a: "Not Found."},
+                {q: "Status Code 500?", a: "Internal Server Error."},
+                {q: "What is Body Parser?", a: "Middleware to parse request body."},
+                {q: "What is CORS?", a: "Cross-Origin Resource Sharing."},
+                {q: "What is JWT?", a: "JSON Web Token for authentication."},
+                {q: "What is bcrypt?", a: "Library to hash passwords."},
+                {q: "What is dotenv?", a: "Module to load environment variables."},
+                {q: "What is PM2?", a: "Process Manager for production."},
+                {q: "What is Nodemon?", a: "Tool to auto-restart server on change."},
+                {q: "Callback vs Promise?", a: "Callback is function; Promise is object."},
+                {q: "What is Chaining?", a: "Connecting multiple methods/promises."},
+                {q: "What is SetImmediate?", a: "Executes after I/O events."},
+                {q: "What is Process.nextTick?", a: "Executes before next event loop phase."},
+                {q: "SQL vs NoSQL with Node?", a: "Node works well with both (Mongo/Postgres)."},
+                {q: "What is Mongoose?", a: "ODM library for MongoDB."},
+                {q: "What is Sequelize?", a: "ORM for SQL databases."},
+                {q: "How to handle errors?", a: "Try-Catch block or .catch()"},
+                {q: "What is Socket.io?", a: "Library for real-time communication."},
+                {q: "What is Websocket?", a: "Protocol for full-duplex communication."},
+                {q: "Why use Node?", a: "Fast, Scalable, JSON based."},
+                {q: "Difference: Node vs PHP?", a: "Async vs Sync execution model."}
+            ],
+            sql: [
+                {q: "What is SQL?", a: "Structured Query Language."},
+                {q: "What is DBMS?", a: "Database Management System."},
+                {q: "What is RDBMS?", a: "Relational DBMS (uses tables)."},
+                {q: "What is a Table?", a: "Collection of related data entries."},
+                {q: "What is a Primary Key?", a: "Unique identifier for a record."},
+                {q: "What is a Foreign Key?", a: "Field linking to another table's PK."},
+                {q: "What is a Candidate Key?", a: "Key that can be a Primary Key."},
+                {q: "What is a Composite Key?", a: "Key made of multiple columns."},
+                {q: "What is NULL?", a: "Represents missing or unknown data."},
+                {q: "What is NOT NULL?", a: "Constraint ensuring column is not empty."},
+                {q: "What is UNIQUE?", a: "Constraint ensuring all values are different."},
+                {q: "What is SELECT?", a: "Command to fetch data."},
+                {q: "What is WHERE?", a: "Clause to filter records."},
+                {q: "What is AND / OR?", a: "Operators for multiple conditions."},
+                {q: "What is LIKE?", a: "Operator for pattern matching."},
+                {q: "What is IN?", a: "Specify multiple values in WHERE."},
+                {q: "What is BETWEEN?", a: "Select values within a range."},
+                {q: "What is ORDER BY?", a: "Sort the result set."},
+                {q: "What is GROUP BY?", a: "Group rows with same values."},
+                {q: "What is HAVING?", a: "Filter condition for Groups."},
+                {q: "What is JOIN?", a: "Combine rows from 2+ tables."},
+                {q: "INNER JOIN?", a: "Records with match in both tables."},
+                {q: "LEFT JOIN?", a: "All from Left, match from Right."},
+                {q: "RIGHT JOIN?", a: "All from Right, match from Left."},
+                {q: "FULL JOIN?", a: "Records when match in either table."},
+                {q: "What is UNION?", a: "Combine result-set of 2 SELECTs."},
+                {q: "What is DDL?", a: "Data Definition Language (Create, Drop)."},
+                {q: "What is DML?", a: "Data Manipulation Language (Insert, Update)."},
+                {q: "What is DCL?", a: "Data Control Language (Grant, Revoke)."},
+                {q: "What is TCL?", a: "Transaction Control (Commit, Rollback)."},
+                {q: "What is Normalization?", a: "Reducing redundancy in data."},
+                {q: "1NF?", a: "Atomic values (no lists)."},
+                {q: "2NF?", a: "No partial dependency."},
+                {q: "3NF?", a: "No transitive dependency."},
+                {q: "What is Denormalization?", a: "Adding redundancy for performance."},
+                {q: "What is Index?", a: "Structure for faster retrieval."},
+                {q: "Clustered Index?", a: "Sorts physical data order."},
+                {q: "Non-Clustered Index?", a: "Separate structure pointing to data."},
+                {q: "What is View?", a: "Virtual table based on query."},
+                {q: "What is Trigger?", a: "Auto-executed code on event."},
+                {q: "What is Stored Procedure?", a: "Saved SQL code to reuse."},
+                {q: "What is ACID?", a: "Atomicity, Consistency, Isolation, Durability."},
+                {q: "DELETE vs TRUNCATE?", a: "Row removal (slower) vs Table reset (faster)."},
+                {q: "DROP?", a: "Deletes entire table structure."},
+                {q: "What is Alias?", a: "Temporary name for table/column."},
+                {q: "What is Subquery?", a: "Query nested inside another query."},
+                {q: "What is Cursor?", a: "Processing rows one by one."},
+                {q: "What is NoSQL?", a: "Non-relational database (MongoDB)."},
+                {q: "SQL vs NoSQL?", a: "Structured vs Unstructured data."},
+                {q: "What is Injection?", a: "Security vulnerability in SQL."}
+            ],
+            pharma: [
+                {q: "What is Pharmacology?", a: "Study of drug action."},
+                {q: "What is Pharmacokinetics?", a: "ADME (Absorption, Distribution...)"},
+                {q: "What is Pharmacodynamics?", a: "What drug does to body."},
+                {q: "What is Bioavailability?", a: "Fraction of drug reaching circulation."},
+                {q: "What is Half-life?", a: "Time for drug to reduce by 50%."},
+                {q: "What is Therapeutic Index?", a: "Safety margin of a drug."},
+                {q: "What is Agonist?", a: "Activates a receptor."},
+                {q: "What is Antagonist?", a: "Blocks a receptor."},
+                {q: "What is Synergism?", a: "Combined effect greater than sum."},
+                {q: "What is Potency?", a: "Amount needed for effect."},
+                {q: "What is Efficacy?", a: "Max effect a drug can produce."},
+                {q: "What is Tolerance?", a: "Reduced effect over time."},
+                {q: "What is Addiction?", a: "Compulsive drug use."},
+                {q: "What is Placebo?", a: "Inactive substance."},
+                {q: "Generic vs Brand?", a: "Same active ingredient, lower cost."},
+                {q: "What is OTC?", a: "Over The Counter (No prescription)."},
+                {q: "What is Prescription?", a: "Order from doctor."},
+                {q: "Schedule H?", a: "Sold only on prescription."},
+                {q: "Schedule X?", a: "Narcotics/Psychotropic."},
+                {q: "What is Analgesic?", a: "Pain killer."},
+                {q: "What is Antipyretic?", a: "Fever reducer."},
+                {q: "What is Antibiotic?", a: "Kills bacteria."},
+                {q: "What is Antiviral?", a: "Treats viral infections."},
+                {q: "What is Antifungal?", a: "Treats fungal infections."},
+                {q: "What is NSAID?", a: "Non-Steroidal Anti-Inflammatory Drug."},
+                {q: "What is Insulin?", a: "Diabetes medication."},
+                {q: "What is Metformin?", a: "First-line diabetes drug."},
+                {q: "What is Statin?", a: "Cholesterol lowering drug."},
+                {q: "What is Diuretic?", a: "Increases urine production."},
+                {q: "What is Beta Blocker?", a: "Lowers BP/Heart rate."},
+                {q: "What is Vaccine?", a: "Immunity booster."},
+                {q: "Routes of Admin?", a: "Oral, IV, IM, SC, Topical."},
+                {q: "What is IV?", a: "Intravenous (into vein)."},
+                {q: "What is IM?", a: "Intramuscular (into muscle)."},
+                {q: "What is SC?", a: "Subcutaneous (under skin)."},
+                {q: "Tablet vs Capsule?", a: "Compressed powder vs Shell."},
+                {q: "What is Syrup?", a: "Sugar-based liquid med."},
+                {q: "What is Suspension?", a: "Solid particles in liquid."},
+                {q: "What is Emulsion?", a: "Mix of oil and water."},
+                {q: "What is ADR?", a: "Adverse Drug Reaction."},
+                {q: "What is Side Effect?", a: "Unwanted secondary effect."},
+                {q: "What is Contraindication?", a: "Reason not to take drug."},
+                {q: "What is FDA?", a: "Food and Drug Administration."},
+                {q: "What is WHO?", a: "World Health Organization."},
+                {q: "What is Clinical Trial?", a: "Testing drugs on humans."},
+                {q: "Phase 1 Trial?", a: "Safety (Small group)."},
+                {q: "Phase 2 Trial?", a: "Efficacy (Medium group)."},
+                {q: "Phase 3 Trial?", a: "Comparison (Large group)."},
+                {q: "Phase 4 Trial?", a: "Post-marketing surveillance."},
+                {q: "What is GMP?", a: "Good Manufacturing Practice."}
+            ]
+        };
+
+        // --- 2. FULL MCQ DATABASE (WITH OPTIONS) ---
+        const mcqDB = {
+            hr: [
+                {q:"Conflict Resolution?", options:["Fight","Discuss","Ignore","Quit"], ans:1},
+                {q:"Greatest Strength?", options:["Lazy","Learner","Late","Rude"], ans:1},
+                {q:"Work under pressure?", options:["Panic","Focus","Cry","Leave"], ans:1},
+                {q:"Feedback handling?", options:["Argue","Listen","Ignore","Shout"], ans:1},
+                {q:"Teamwork?", options:["Solo","Collaborate","Bossy","Silent"], ans:1},
+                {q:"Deadline missed?", options:["Hide","Inform","Lie","Blame"], ans:1},
+                {q:"Goal setting?", options:["None","SMART","Vague","Random"], ans:1},
+                {q:"Ideal Boss?", options:["Absent","Supportive","Micromanager","Rude"], ans:1},
+                {q:"Ethics?", options:["Cheat","Honest","Steal","Lie"], ans:1},
+                {q:"Overtime?", options:["Never","Flexible","Hate","Refuse"], ans:1}
+            ],
+            react: [
+                {q:"React is?", options:["Framework","Library","Database","OS"], ans:1},
+                {q:"State Hook?", options:["useEffect","useState","useRef","useContext"], ans:1},
+                {q:"Side Effects?", options:["useState","useEffect","useMemo","useCallback"], ans:1},
+                {q:"JSX is?", options:["HTML","XML","Syntax Ext","String"], ans:2},
+                {q:"Virtual DOM?", options:["Slow","Real","Fast Copy","None"], ans:2},
+                {q:"Props are?", options:["Mutable","Immutable","Static","Global"], ans:1},
+                {q:"Entry file?", options:["index.js","app.js","main.db","style.css"], ans:0},
+                {q:"Ref hook?", options:["useRef","useDom","useId","useTag"], ans:0},
+                {q:"Routing?", options:["React-Router","Express","Axios","Fetch"], ans:0},
+                {q:"Optimization?", options:["useMemo","useState","useEffect","None"], ans:0}
+            ],
+            node: [
+                {q:"Node Engine?", options:["V8","Spider","Chakra","None"], ans:0},
+                {q:"Global Obj?", options:["Window","Process","Document","Tab"], ans:1},
+                {q:"File System?", options:["http","fs","path","os"], ans:1},
+                {q:"Async handler?", options:["Loop","Event Loop","Thread","Stack"], ans:1},
+                {q:"Package Mgr?", options:["RPM","NPM","Yarn","Pip"], ans:1},
+                {q:"Framework?", options:["Django","Express","Flask","Spring"], ans:1},
+                {q:"API Test?", options:["Postman","Excel","Word","Paint"], ans:0},
+                {q:"Password Hash?", options:["Bcrypt","Md5","Plain","Text"], ans:0},
+                {q:"Realtime?", options:["Socket.io","Http","Ftp","Smtp"], ans:0},
+                {q:"Database?", options:["MongoDB","HTML","CSS","React"], ans:0}
+            ],
+            sql: [
+                {q:"Fetch Data?", options:["GET","SELECT","PULL","FETCH"], ans:1},
+                {q:"Unique ID?", options:["Primary Key","Foreign","Index","Null"], ans:0},
+                {q:"Remove Rows?", options:["DELETE","DROP","CLEAR","REMOVE"], ans:0},
+                {q:"Structure delete?", options:["DELETE","DROP","TRUNCATE","END"], ans:1},
+                {q:"Pattern match?", options:["LIKE","SAME","AS","IS"], ans:0},
+                {q:"Add Row?", options:["ADD","INSERT","UPDATE","NEW"], ans:1},
+                {q:"Modify?", options:["CHANGE","UPDATE","ALTER","MOD"], ans:1},
+                {q:"Count?", options:["TOTAL","SUM","COUNT","NUM"], ans:2},
+                {q:"Combine?", options:["JOIN","MERGE","ADD","LINK"], ans:0},
+                {q:"Condition?", options:["WHERE","IF","WHEN","CHECK"], ans:0}
+            ],
+            pharma: [
+                {q:"Pain killer?", options:["Analgesic","Antacid","Statin","None"], ans:0},
+                {q:"Fever?", options:["Antibiotic","Antipyretic","Antiviral","None"], ans:1},
+                {q:"Diabetes?", options:["Insulin","Aspirin","Vicks","Dolo"], ans:0},
+                {q:"ADME?", options:["Pharmacokinetics","Dynamics","Biology","Chem"], ans:0},
+                {q:"OTC?", options:["Over The Counter","On The Counter","Over Top","None"], ans:0},
+                {q:"Generic?", options:["Costly","Cheap Copy","Brand","Fake"], ans:1},
+                {q:"IV?", options:["Intra Venous","Intra Viral","Inner Vein","None"], ans:0},
+                {q:"BP Drug?", options:["Antihypertensive","Analgesic","Statin","None"], ans:0},
+                {q:"Good Cholesterol?", options:["HDL","LDL","VLDL","Fat"], ans:0},
+                {q:"Immunity?", options:["Vaccine","Virus","Bacteria","Fungi"], ans:0}
+            ]
+        };
+
+        // --- 3. UI LOGIC ---
+        function renderStudyList(cat, btn) {
+            const container = document.getElementById('studyContainer');
+            container.innerHTML = "";
+            if(btn) {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            if(studyDB[cat]) {
+                studyDB[cat].forEach(item => {
+                    container.innerHTML += `
+                        <div class="q-card" onclick="trackRead(this)">
+                            <div style="font-weight:600; display:flex; justify-content:space-between;">${item.q} <span>+</span></div>
+                            <div class="answer-text">${item.a}</div>
+                        </div>`;
+                });
+            }
+        }
+
+        window.showView = (id, btn) => {
+            document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-'+id).classList.add('active');
+            if(btn) {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+        };
+
+        // --- 4. EXAM ENGINE ---
+        let curQ = [], cIdx = 0, uScore = 0, tInt;
+
+        window.startExam = (sub) => {
+            // Pick Random 10
+            curQ = mcqDB[sub].sort(() => 0.5 - Math.random()).slice(0, 10);
+            cIdx=0; uScore=0;
+            document.getElementById('examSubject').innerText = sub.toUpperCase();
+            
+            showView('exam');
+            loadQ();
+            
+            // Timer
+            let tm = 600;
+            clearInterval(tInt);
+            tInt = setInterval(()=>{
+                tm--;
+                document.getElementById('timer').innerText = `${Math.floor(tm/60)}:${(tm%60).toString().padStart(2,'0')}`;
+                if(tm<=0) window.submitExamResult(sub, Math.round((uScore/curQ.length)*100));
+            },1000);
+        };
+
+        function loadQ() {
+            if(cIdx >= curQ.length) {
+                clearInterval(tInt);
+                let finalScore = Math.round((uScore/curQ.length)*100);
+                window.submitExamResult(document.getElementById('examSubject').innerText, finalScore);
+                showView('history');
+                return;
+            }
+            
+            let q = curQ[cIdx];
+            document.getElementById('qText').innerText = `Q${cIdx+1}: ${q.q}`;
+            document.getElementById('optionsBox').innerHTML = q.options.map((o,i) => 
+                `<div class="option-card" onclick="checkAns(${i}, ${q.ans})">${o}</div>`
+            ).join('');
+            
+            // Palette
+            document.getElementById('paletteBox').innerHTML = curQ.map((_,i) => 
+                `<div class="q-num ${i===cIdx?'active':''} ${i<cIdx?'answered':''}">${i+1}</div>`
+            ).join('');
+
+            // Buttons
+            document.getElementById('btnNext').style.display = cIdx===curQ.length-1 ? 'none' : 'block';
+            document.getElementById('btnSubmit').style.display = cIdx===curQ.length-1 ? 'block' : 'none';
+        }
+
+        window.checkAns = (sel, cor) => {
+            document.querySelectorAll('.option-card').forEach((el,idx) => {
+                el.style.borderColor = idx===sel ? '#4f46e5' : '#e5e7eb';
+                el.style.background = idx===sel ? '#eef2ff' : 'white';
+            });
+            if(sel === cor) uScore++;
+        };
+
+        window.nextQ = () => { cIdx++; loadQ(); };
+        window.prevQ = () => { if(cIdx>0) cIdx--; loadQ(); };
+        window.submitExam = () => {
+             clearInterval(tInt);
+             let finalScore = Math.round((uScore/curQ.length)*100);
+             window.submitExamResult(document.getElementById('examSubject').innerText, finalScore);
+             showView('history');
+        };
+
+        // Init
+        renderStudyList('hr');
+    </script>
+</body>
+</html>

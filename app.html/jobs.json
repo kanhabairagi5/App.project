@@ -1,0 +1,94 @@
+
+
+{
+  "student": {
+    "10th_pass": [
+      {
+        "title": "Data Entry Operator",
+        "skills": ["Typing", "Basic Computer"],
+        "salary": "12000",
+        "duration": "Full-time"
+      },
+      {
+        "title": "Retail Assistant",
+        "skills": ["Communication", "Customer Service"],
+        "salary": "10000",
+        "duration": "Part-time"
+      }
+    ],
+    "12th_pass": [
+      {
+        "title": "Bank Clerk",
+        "skills": ["Maths", "Computer Basics"],
+        "salary": "18000",
+        "duration": "Full-time"
+      },
+      {
+        "title": "Office Assistant",
+        "skills": ["Organizing", "Communication"],
+        "salary": "15000",
+        "duration": "Full-time"
+      }
+    ]
+  },
+  "graduate": {
+    "BSc": [
+      {
+        "title": "Lab Technician",
+        "skills": ["Lab Work", "Analysis"],
+        "salary": "25000",
+        "duration": "Full-time"
+      },
+      {
+        "title": "Data Analyst",
+        "skills": ["Excel", "SQL", "Statistics"],
+        "salary": "35000",
+        "duration": "Full-time"
+      }
+    ],
+    "BA": [
+      {
+        "title": "Content Writer",
+        "skills": ["Writing", "Creativity"],
+        "salary": "20000",
+        "duration": "Full-time"
+      },
+      {
+        "title": "Marketing Assistant",
+        "skills": ["Marketing", "Communication"],
+        "salary": "22000",
+        "duration": "Full-time"
+      }
+    ]
+  },
+  "business_ideas": {
+    "small_capital": [
+      {
+        "title": "Tiffin Service",
+        "skills": ["Cooking", "Delivery Management"],
+        "capital": "5000",
+        "duration": "Flexible"
+      },
+      {
+        "title": "Stationery Shop",
+        "skills": ["Selling", "Customer Service"],
+        "capital": "15000",
+        "duration": "Full-time"
+      }
+    ],
+    "medium_capital": [
+      {
+        "title": "Cafe/Small Restaurant",
+        "skills": ["Cooking", "Management", "Service"],
+        "capital": "50000",
+        "duration": "Full-time"
+      },
+      {
+        "title": "Online Reselling Business",
+        "skills": ["Digital Marketing", "Selling"],
+        "capital": "30000",
+        "duration": "Flexible"
+      }
+    ]
+  }
+}

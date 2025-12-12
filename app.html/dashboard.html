@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard - PathFinder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { display: flex; height: 100vh; background: #F0F4F8; color: #333; overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: 260px; background: #0A2647; color: white; display: flex; flex-direction: column; padding: 25px;
+            box-shadow: 4px 0 10px rgba(0,0,0,0.1);
+        }
+        .logo { font-size: 1.6rem; font-weight: 700; margin-bottom: 50px; color: white; display: flex; align-items: center; gap: 10px; }
+        .logo span { color: #FF9F29; }
+        
+        .menu { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+        .menu-btn {
+            display: flex; align-items: center; gap: 12px; color: rgba(255,255,255,0.7);
+            text-decoration: none; padding: 12px 15px; border-radius: 10px; transition: 0.3s;
+            background: none; border: none; font-size: 1rem; cursor: pointer; text-align: left; width: 100%;
+        }
+        .menu-btn:hover, .menu-btn.active { background: #176B87; color: white; transform: translateX(5px); }
+        .menu-btn i { width: 25px; font-size: 1.1rem; }
+
+        /* --- MAIN CONTENT --- */
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; position: relative; }
+        
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .user-info { display: flex; align-items: center; gap: 15px; background: white; padding: 8px 15px; border-radius: 30px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); cursor: pointer; }
+        .avatar { width: 35px; height: 35px; background: #FF9F29; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+
+        /* --- SECTIONS (Hidden logic) --- */
+        .content-section { display: none; animation: fadeIn 0.4s ease-in-out; }
+        .content-section.active-section { display: block; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* DASHBOARD CARDS */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 25px; margin-bottom: 30px; }
+        .card { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); border-bottom: 4px solid transparent; transition: 0.3s; }
+        .card:hover { transform: translateY(-5px); border-bottom-color: #FF9F29; }
+        .card h3 { font-size: 2.2rem; color: #0A2647; margin-bottom: 5px; }
+        .card p { color: #666; font-size: 0.95rem; font-weight: 500; }
+
+        /* LIST ITEMS (For Dashboard) */
+        .list-item {
+            background: white; padding: 20px; border-radius: 12px; margin-bottom: 15px;
+            display: flex; justify-content: space-between; align-items: center; border-left: 5px solid #FF9F29;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.03);
+        }
+        .tag { background: #eef7fa; color: #176B87; padding: 5px 12px; border-radius: 6px; font-size: 0.8rem; font-weight: 600; }
+        .btn-sm { padding: 8px 18px; background: #0A2647; color: white; text-decoration: none; border-radius: 6px; font-size: 0.9rem; cursor: pointer; transition: 0.3s; border:none;}
+        .btn-sm:hover { background: #176B87; }
+
+        /* --- JOBS TABLE (New) --- */
+        .table-container { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; border-bottom: 2px solid #f0f0f0; color: #666; font-size: 0.9rem; }
+        td { padding: 15px; border-bottom: 1px solid #f0f0f0; color: #333; }
+        .status-badge { padding: 5px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; }
+        .status-applied { background: #e3f2fd; color: #2196f3; }
+        .status-interview { background: #fff3e0; color: #ff9800; }
+        .status-rejected { background: #ffebee; color: #f44336; }
+
+        /* --- BUSINESS PLAN CARD (New) --- */
+        .biz-header { background: linear-gradient(135deg, #176B87, #0A2647); color: white; padding: 30px; border-radius: 15px; margin-bottom: 20px; }
+        .biz-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .step-card { background: white; padding: 15px; border-radius: 10px; border-left: 4px solid #176B87; margin-bottom: 10px; }
+
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo"><i class="fas fa-compass"></i> Path<span>Finder</span></div>
+        <nav class="menu">
+            <button class="menu-btn active" onclick="showSection('dashboard', this)">
+                <i class="fas fa-home"></i> Dashboard
+            </button>
+            <button class="menu-btn" onclick="showSection('myjobs', this)">
+                <i class="fas fa-briefcase"></i> My Jobs
+            </button>
+            <button class="menu-btn" onclick="showSection('business', this)">
+                <i class="fas fa-chart-pie"></i> Business Plan
+            </button>
+            <button class="menu-btn" onclick="showSection('courses', this)">
+                <i class="fas fa-graduation-cap"></i> Courses
+            </button>
+            
+            <a href="index.html" class="menu-btn" style="margin-top: auto; color: #ff6b6b;">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        
+        <div class="header">
+            <h2 id="page-title">Overview</h2>
+            <div class="user-info">
+                <span>My Profile</span>
+                <div class="avatar">U</div>
+            </div>
+        </div>
+
+        <div id="dashboard" class="content-section active-section">
+            <div class="stats-grid">
+                <div class="card">
+                    <h3>12</h3>
+                    <p>Jobs Applied</p>
+                </div>
+                <div class="card">
+                    <h3>3</h3>
+                    <p>Business Ideas Saved</p>
+                </div>
+                <div class="card">
+                    <h3>85%</h3>
+                    <p>Profile Score</p>
+                </div>
+            </div>
+
+            <h3 style="margin-bottom: 20px; color: #0A2647;">Recommended For You</h3>
+            
+            <div class="list-item">
+                <div>
+                    <h4>Start a Tea Franchise</h4>
+                    <p style="font-size: 0.9rem; color: #666;">Investment: ₹30,000 | Profit: High</p>
+                </div>
+                <span class="tag">Business</span>
+                <button class="btn-sm" onclick="showSection('business', document.querySelectorAll('.menu-btn')[2])">View Plan</button>
+            </div>
+
+            <div class="list-item" style="border-left-color: #176B87;">
+                <div>
+                    <h4>SSC CHSL Exam 2025</h4>
+                    <p style="font-size: 0.9rem; color: #666;">Eligibility: 12th Pass | Govt Job</p>
+                </div>
+                <span class="tag">Job</span>
+                <button class="btn-sm" onclick="showSection('myjobs', document.querySelectorAll('.menu-btn')[1])">Apply Now</button>
+            </div>
+        </div>
+
+        <div id="myjobs" class="content-section">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Job Role</th>
+                            <th>Company/Org</th>
+                            <th>Date Applied</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Data Entry Operator</strong></td>
+                            <td>SSC Govt</td>
+                            <td>12 Nov 2024</td>
+                            <td><span class="status-badge status-applied">Applied</span></td>
+                            <td><button class="btn-sm">Track</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Sales Associate</strong></td>
+                            <td>Tech Mahindra</td>
+                            <td>05 Nov 2024</td>
+                            <td><span class="status-badge status-interview">Interview</span></td>
+                            <td><button class="btn-sm">Details</button></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Office Assistant</strong></td>
+                            <td>Local Pvt Ltd</td>
+                            <td>20 Oct 2024</td>
+                            <td><span class="status-badge status-rejected">Closed</span></td>
+                            <td><button class="btn-sm" style="background:#ccc;">View</button></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div id="business" class="content-section">
+            <div class="biz-header">
+                <h2>☕ Tea Franchise Model</h2>
+                <p>Status: In Progress | Budget: ₹30,000</p>
+            </div>
+            
+            <div class="biz-grid">
+                <div>
+                    <h3 style="margin-bottom:15px; color:#0A2647;">Financial Breakdown</h3>
+                    <div class="card" style="margin-bottom:15px;">
+                        <h4>₹15,000</h4>
+                        <p>Equipment (Stove, Utensils)</p>
+                    </div>
+                    <div class="card">
+                        <h4>₹10,000</h4>
+                        <p>Raw Material & Branding</p>
+                    </div>
+                </div>
+                <div>
+                    <h3 style="margin-bottom:15px; color:#0A2647;">Action Plan</h3>
+                    <div class="step-card">Step 1: Apply for FSSAI License (Done) ✅</div>
+                    <div class="step-card">Step 2: Find Location (Pending) ⏳</div>
+                    <div class="step-card">Step 3: Marketing Flyers (Pending) ⏳</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="courses" class="content-section">
+            <div class="stats-grid">
+                <div class="card">
+                    <h4>Digital Marketing Basics</h4>
+                    <p style="margin:10px 0;">Progress: 70%</p>
+                    <div style="background:#eee; height:8px; border-radius:4px;"><div style="background:#28a745; width:70%; height:100%; border-radius:4px;"></div></div>
+                    <button class="btn-sm" style="margin-top:15px; width:100%;">Resume</button>
+                </div>
+                <div class="card">
+                    <h4>Financial Literacy</h4>
+                    <p style="margin:10px 0;">Progress: 20%</p>
+                    <div style="background:#eee; height:8px; border-radius:4px;"><div style="background:#ffc107; width:20%; height:100%; border-radius:4px;"></div></div>
+                    <button class="btn-sm" style="margin-top:15px; width:100%;">Resume</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        function showSection(sectionId, btnElement) {
+            // 1. Hide all sections
+            document.querySelectorAll('.content-section').forEach(sec => {
+                sec.classList.remove('active-section');
+            });
+
+            // 2. Show the selected section
+            document.getElementById(sectionId).classList.add('active-section');
+
+            // 3. Update Title
+            const titles = {
+                'dashboard': 'Overview',
+                'myjobs': 'My Job Applications',
+                'business': 'Business Planner',
+                'courses': 'My Learning'
+            };
+            document.getElementById('page-title').innerText = titles[sectionId];
+
+            // 4. Update Sidebar Active State
+            // Only update if a button was actually clicked (not called programmatically without element)
+            if (btnElement) {
+                document.querySelectorAll('.menu-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                btnElement.classList.add('active');
+            }
+        }
+    </script>
+
+</body>
+</html>

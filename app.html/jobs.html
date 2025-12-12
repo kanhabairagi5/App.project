@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Find Jobs - PathFinder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* Same Theme Variables */
+        :root { --primary: #0A2647; --secondary: #176B87; --accent: #FF9F29; --light-bg: #F0F4F8; --white: #ffffff; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body { background: var(--light-bg); color: #333; }
+
+        /* Reuse Header Style (Simplified for code brevity) */
+        .simple-header { background: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--primary); text-decoration: none; }
+        .logo span { color: var(--accent); }
+        .back-btn { color: var(--secondary); text-decoration: none; font-weight: 600; }
+
+        /* --- LAYOUT --- */
+        .container { display: flex; max-width: 1200px; margin: 30px auto; gap: 30px; padding: 0 20px; }
+        
+        /* SIDEBAR FILTERS */
+        .sidebar { width: 280px; background: white; padding: 25px; border-radius: 15px; height: fit-content; position: sticky; top: 80px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .filter-group { margin-bottom: 25px; }
+        .filter-group h4 { margin-bottom: 15px; color: var(--primary); font-size: 1.1rem; }
+        
+        .checkbox-item { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; cursor: pointer; font-size: 0.95rem; color: #555; }
+        .checkbox-item input { accent-color: var(--secondary); transform: scale(1.2); }
+
+        /* JOB FEED */
+        .job-feed { flex: 1; }
+        .search-hero { background: white; padding: 20px; border-radius: 15px; display: flex; gap: 10px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); }
+        .search-hero input { flex: 1; border: 2px solid #eee; padding: 12px; border-radius: 8px; outline: none; }
+        .search-hero button { background: var(--primary); color: white; border: none; padding: 0 25px; border-radius: 8px; cursor: pointer; font-weight: 600; }
+
+        /* JOB CARDS */
+        .job-card { background: white; padding: 25px; border-radius: 15px; margin-bottom: 20px; border-left: 5px solid transparent; transition: 0.3s; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.02); }
+        .job-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        
+        .job-card.govt { border-left-color: var(--accent); } /* Govt Job Color */
+        .job-card.private { border-left-color: var(--secondary); } /* Private Job Color */
+
+        .card-header { display: flex; justify-content: space-between; align-items: start; margin-bottom: 15px; }
+        .job-role { font-size: 1.3rem; font-weight: 700; color: var(--primary); }
+        .company-name { color: #666; font-size: 0.95rem; font-weight: 500; display: flex; align-items: center; gap: 5px; }
+        
+        .tags { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .tag { padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; background: #f0f0f0; color: #555; }
+        .tag.urgent { background: #ffebee; color: #d32f2f; }
+        .tag.salary { background: #e8f5e9; color: #2e7d32; }
+
+        .card-footer { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 15px; }
+        .post-date { font-size: 0.85rem; color: #999; }
+        .apply-btn { background: var(--secondary); color: white; padding: 8px 20px; text-decoration: none; border-radius: 6px; font-weight: 600; transition: 0.3s; }
+        .apply-btn:hover { background: var(--primary); }
+
+        /* EXAM CALENDAR WIDGET */
+        .calendar-widget { background: var(--primary); color: white; padding: 20px; border-radius: 15px; margin-bottom: 25px; }
+        .exam-item { display: flex; justify-content: space-between; border-bottom: 1px solid rgba(255,255,255,0.2); padding: 10px 0; font-size: 0.9rem; }
+        .exam-item:last-child { border: none; }
+        .exam-date { color: var(--accent); font-weight: 700; }
+
+    </style>
+</head>
+<body>
+
+    <header class="simple-header">
+        <a href="index.html" class="logo"><i class="fas fa-compass"></i> Path<span>Finder</span></a>
+        <a href="index.html" class="back-btn">← Back to Home</a>
+    </header>
+
+    <div class="container">
+        
+        <aside class="sidebar">
+            <div class="calendar-widget">
+                <h4 style="margin-bottom:15px; color:white;"><i class="fas fa-calendar-alt"></i> Upcoming Exams</h4>
+                <div class="exam-item"><span>SSC CHSL</span> <span class="exam-date">10 Dec</span></div>
+                <div class="exam-item"><span>Railway Grp D</span> <span class="exam-date">15 Jan</span></div>
+                <div class="exam-item"><span>SBI Clerk</span> <span class="exam-date">02 Feb</span></div>
+            </div>
+
+            <div class="filter-group">
+                <h4>Job Type</h4>
+                <label class="checkbox-item"><input type="checkbox" checked> Private Jobs</label>
+                <label class="checkbox-item"><input type="checkbox" checked> Government Jobs</label>
+                <label class="checkbox-item"><input type="checkbox"> Work From Home</label>
+            </div>
+
+            <div class="filter-group">
+                <h4>Education</h4>
+                <label class="checkbox-item"><input type="checkbox"> 10th Pass</label>
+                <label class="checkbox-item"><input type="checkbox"> 12th Pass</label>
+                <label class="checkbox-item"><input type="checkbox"> Graduate</label>
+            </div>
+
+            <div class="filter-group">
+                <h4>Salary Range</h4>
+                <label class="checkbox-item"><input type="radio" name="sal"> ₹10k - ₹20k</label>
+                <label class="checkbox-item"><input type="radio" name="sal"> ₹20k - ₹50k</label>
+                <label class="checkbox-item"><input type="radio" name="sal"> ₹50k+</label>
+            </div>
+        </aside>
+
+        <main class="job-feed">
+            
+            <div class="search-hero">
+                <input type="text" placeholder="Search by Job Role (e.g. Data Entry, Police)...">
+                <button>Search</button>
+            </div>
+
+            <div class="job-card govt">
+                <div class="card-header">
+                    <div>
+                        <div class="job-role">Constable (GD)</div>
+                        <div class="company-name"><i class="fas fa-building"></i> Delhi Police • Govt of India</div>
+                    </div>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/5/55/Emblem_of_India.svg" width="40" alt="Govt">
+                </div>
+                <div class="tags">
+                    <span class="tag salary">₹25,000 - ₹35,000</span>
+                    <span class="tag">12th Pass</span>
+                    <span class="tag urgent">Exam Soon</span>
+                </div>
+                <div class="card-footer">
+                    <span class="post-date">Posted 2 days ago</span>
+                    <a href="#" class="apply-btn">View Notification</a>
+                </div>
+            </div>
+
+            <div class="job-card private">
+                <div class="card-header">
+                    <div>
+                        <div class="job-role">Customer Support Executive</div>
+                        <div class="company-name"><i class="fas fa-building"></i> Amazon India • Remote</div>
+                    </div>
+                    <div style="background:#FF9900; color:white; padding:5px; border-radius:5px; font-weight:bold; font-size:0.8rem;">AMZ</div>
+                </div>
+                <div class="tags">
+                    <span class="tag salary">₹18,000 - ₹22,000</span>
+                    <span class="tag">12th Pass / Grad</span>
+                    <span class="tag urgent">Work From Home</span>
+                </div>
+                <div class="card-footer">
+                    <span class="post-date">Posted 5 hours ago</span>
+                    <a href="#" class="apply-btn">Apply Now</a>
+                </div>
+            </div>
+
+            <div class="job-card private">
+                <div class="card-header">
+                    <div>
+                        <div class="job-role">Junior Web Developer</div>
+                        <div class="company-name"><i class="fas fa-building"></i> TechSolutions Pvt Ltd • Bangalore</div>
+                    </div>
+                </div>
+                <div class="tags">
+                    <span class="tag salary">₹30,000 - ₹45,000</span>
+                    <span class="tag">Graduate</span>
+                    <span class="tag">HTML/CSS</span>
+                </div>
+                <div class="card-footer">
+                    <span class="post-date">Posted 1 day ago</span>
+                    <a href="#" class="apply-btn">Apply Now</a>
+                </div>
+            </div>
+
+            <div class="job-card private">
+                <div class="card-header">
+                    <div>
+                        <div class="job-role">Delivery Partner</div>
+                        <div class="company-name"><i class="fas fa-building"></i> Swiggy • Your City</div>
+                    </div>
+                </div>
+                <div class="tags">
+                    <span class="tag salary">₹20,000+ Incentives</span>
+                    <span class="tag">10th Pass</span>
+                    <span class="tag urgent">Immediate Joining</span>
+                </div>
+                <div class="card-footer">
+                    <span class="post-date">Posted today</span>
+                    <a href="#" class="apply-btn">Call HR</a>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+</body>
+</html>

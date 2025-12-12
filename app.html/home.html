@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login & Sign Up - PathFinder</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, #0A2647, #176B87);
+            min-height: 100vh;
+            display: flex; align-items: center; justify-content: center;
+            padding: 20px;
+        }
+
+        .back-link { 
+            position: absolute; top: 30px; left: 40px; color: white; text-decoration: none; 
+            font-weight: 600; opacity: 0.8; transition: 0.3s; display: flex; align-items: center; gap: 8px;
+            z-index: 10;
+        }
+        .back-link:hover { opacity: 1; transform: translateX(-5px); }
+
+        /* --- Main Container --- */
+        .container {
+            background: white; width: 1000px; min-height: 600px; display: flex;
+            border-radius: 25px; overflow: hidden; box-shadow: 0 30px 60px rgba(0,0,0,0.4);
+            position: relative;
+        }
+
+        /* --- Left Side (Info Panel) --- */
+        .info-panel {
+            flex: 1; background: linear-gradient(rgba(10, 38, 71, 0.85), rgba(23, 107, 135, 0.85)), url('https://source.unsplash.com/800x1000/?success,future,technology');
+            background-size: cover; background-position: center;
+            color: white; padding: 60px; display: flex; flex-direction: column; justify-content: center;
+            position: relative; overflow: hidden;
+        }
+
+        .info-content { animation: slideInLeft 0.8s ease-out forwards; opacity: 0; }
+        @keyframes slideInLeft { from { opacity: 0; transform: translateX(-30px); } to { opacity: 1; transform: translateX(0); } }
+
+        .info-panel h2 { font-size: 2.8rem; font-weight: 700; margin-bottom: 20px; line-height: 1.2; }
+        .info-panel p { font-size: 1.1rem; margin-bottom: 40px; opacity: 0.9; }
+
+        .features-list { list-style: none; }
+        .features-list li { display: flex; align-items: center; gap: 15px; margin-bottom: 25px; font-size: 1.05rem; font-weight: 500; }
+        .icon-box {
+            width: 50px; height: 50px; background: rgba(255, 159, 41, 0.2); color: #FF9F29;
+            border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;
+            backdrop-filter: blur(5px);
+        }
+
+        /* --- Right Side (Forms Area) --- */
+        .form-panel {
+            flex: 1; padding: 60px; display: flex; align-items: center; justify-content: center; position: relative;
+        }
+
+        .form-wrapper { width: 100%; max-width: 400px; position: relative; height: 450px; }
+
+        .form-box {
+            position: absolute; top: 0; left: 0; width: 100%;
+            background: white; transition: all 0.5s ease-in-out;
+            opacity: 0; transform: translateY(30px) scale(0.95);
+            pointer-events: none;
+        }
+
+        .form-box.active {
+            opacity: 1; transform: translateY(0) scale(1); z-index: 2; pointer-events: all;
+        }
+
+        .form-box h2 { color: #0A2647; margin-bottom: 10px; font-size: 2rem; }
+        .form-box > p { color: #666; margin-bottom: 30px; font-size: 0.95rem; }
+
+        .input-group { margin-bottom: 25px; position: relative; }
+        .input-group i { position: absolute; top: 50%; left: 15px; transform: translateY(-50%); color: #aaa; font-size: 1.1rem; }
+        .input-group input {
+            width: 100%; padding: 15px 15px 15px 45px;
+            border: 2px solid #eee; border-radius: 12px; outline: none; font-size: 1rem; transition: 0.3s;
+            background: #f9f9f9;
+        }
+        .input-group input:focus { border-color: #176B87; background: white; box-shadow: 0 5px 15px rgba(23, 107, 135, 0.1); }
+        .input-label { position: absolute; top: -10px; left: 15px; background: white; padding: 0 5px; font-size: 0.85rem; color: #176B87; font-weight: 600; }
+
+        .btn {
+            background: linear-gradient(to right, #0A2647, #176B87); color: white; padding: 15px; border: none; border-radius: 12px;
+            width: 100%; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: 0.3s;
+            box-shadow: 0 10px 20px rgba(10, 38, 71, 0.2);
+        }
+        .btn:hover { transform: translateY(-3px); box-shadow: 0 15px 30px rgba(10, 38, 71, 0.3); background: linear-gradient(to right, #176B87, #0A2647); }
+
+        .switch-text { margin-top: 25px; text-align: center; font-size: 0.95rem; color: #666; }
+        .switch-btn { color: #FF9F29; font-weight: 700; cursor: pointer; transition: 0.3s; }
+        .switch-btn:hover { text-decoration: underline; }
+
+        @media (max-width: 900px) {
+            .container { flex-direction: column; width: 100%; height: auto; }
+            .info-panel { padding: 40px; min-height: 300px; }
+            .form-panel { padding: 40px 20px; }
+            .back-link { top: 20px; left: 20px; font-size: 0.9rem; }
+            .info-panel h2 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Back to Home</a>
+
+    <div class="container">
+        <div class="info-panel">
+            <div class="info-content">
+                <h2>Unlock Your Future.</h2>
+                <p>Join thousands of students and professionals making smarter career decisions with PathFinder.</p>
+                
+                <ul class="features-list">
+                    <li>
+                        <div class="icon-box"><i class="fas fa-route"></i></div>
+                        <span>Personalized Career Roadmaps</span>
+                    </li>
+                    <li>
+                        <div class="icon-box"><i class="fas fa-lightbulb"></i></div>
+                        <span>Curated Business Ideas based on Capital</span>
+                    </li>
+                    <li>
+                        <div class="icon-box"><i class="fas fa-robot"></i></div>
+                        <span>24/7 AI Career Assistant</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="form-panel">
+            <div class="form-wrapper">
+                
+                <div class="form-box login-box active">
+                    <h2>Sign In</h2>
+                    <p>Welcome back! Please login to your account.</p>
+                    
+                    <form onsubmit="handleLogin(event)">
+                        <div class="input-group">
+                            <i class="far fa-envelope"></i>
+                            <input type="email" id="loginEmail" required>
+                            <span class="input-label">Email Address</span>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" required>
+                            <span class="input-label">Password</span>
+                        </div>
+                        <button type="submit" class="btn">Login &rarr;</button>
+                    </form>
+
+                    <p class="switch-text">
+                        New to PathFinder? 
+                        <span class="switch-btn" onclick="switchForm('signup')">Create Account</span>
+                    </p>
+                </div>
+
+                <div class="form-box signup-box">
+                    <h2>Create Account</h2>
+                    <p>Start your journey. It takes less than a minute.</p>
+                    
+                    <form onsubmit="handleSignup(event)">
+                        <div class="input-group">
+                            <i class="far fa-user"></i>
+                            <input type="text" id="signupName" required>
+                            <span class="input-label">Full Name</span>
+                        </div>
+                        <div class="input-group">
+                            <i class="far fa-envelope"></i>
+                            <input type="email" required>
+                            <span class="input-label">Email Address</span>
+                        </div>
+                        <div class="input-group">
+                            <i class="fas fa-lock"></i>
+                            <input type="password" required>
+                            <span class="input-label">Create Password</span>
+                        </div>
+                        <button type="submit" class="btn">Sign Up &rarr;</button>
+                    </form>
+
+                    <p class="switch-text">
+                        Already have an account? 
+                        <span class="switch-btn" onclick="switchForm('login')">Sign In here</span>
+                    </p>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const loginBox = document.querySelector('.login-box');
+        const signupBox = document.querySelector('.signup-box');
+
+        // Form Switching Logic
+        function switchForm(toForm) {
+            if (toForm === 'signup') {
+                loginBox.classList.remove('active');
+                signupBox.classList.add('active');
+            } else {
+                signupBox.classList.remove('active');
+                loginBox.classList.add('active');
+            }
+        }
+
+        // --- NEW DATA CONNECTION LOGIC ---
+
+        // 1. Handle Login
+        function handleLogin(e) {
+            e.preventDefault(); // Stop page reload
+            
+            const email = document.getElementById('loginEmail').value;
+            
+            // Extract Name from Email (e.g. kanha@gmail.com -> Kanha)
+            let name = email.split('@')[0];
+            name = name.charAt(0).toUpperCase() + name.slice(1);
+
+            // Save User Name
+            localStorage.setItem("activeUser", name);
+            
+            // Redirect to Interview App
+            window.location.href = "interview.html";
+        }
+
+        // 2. Handle Signup
+        function handleSignup(e) {
+            e.preventDefault(); // Stop page reload
+
+            const name = document.getElementById('signupName').value;
+
+            // Save User Name
+            localStorage.setItem("activeUser", name);
+
+            // Redirect to Interview App
+            window.location.href = "interview.html";
+        }
+    </script>
+
+</body>
+</html>

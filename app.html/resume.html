@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Builder - PathFinder</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Merriweather:wght@300;400;700&family=Open+Sans:wght@400;600&family=Roboto:wght@400;500;700&family=Lato:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <style>
+        /* --- VARIABLES --- */
+        :root { 
+            --primary: #2c3e50; 
+            --accent: #2980b9; 
+            --bg-light: #f4f6f8;
+            --border-color: #dcdde1;
+            --delete-color: #e74c3c;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { background: var(--bg-light); font-family: 'Open Sans', sans-serif; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+
+        /* --- HEADER & TOOLBAR --- */
+        .editor-header {
+            background: #fff; height: 70px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; border-bottom: 1px solid var(--border-color); box-shadow: 0 2px 5px rgba(0,0,0,0.05); z-index: 10;
+        }
+        .brand { font-family: 'Merriweather', serif; font-weight: 700; font-size: 1.2rem; color: var(--primary); text-decoration: none; }
+        .brand span { color: var(--accent); }
+        
+        .template-selector { display: flex; gap: 10px; background: #f0f2f5; padding: 5px; border-radius: 8px; }
+        .tpl-btn {
+            border: none; background: transparent; padding: 8px 15px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; font-weight: 600; color: #555; transition: 0.2s;
+        }
+        .tpl-btn:hover { background: #e1e4e8; }
+        .tpl-btn.active { background: white; color: var(--accent); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+
+        .actions { display: flex; gap: 10px; }
+        .btn { padding: 8px 20px; border-radius: 4px; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: none; transition: 0.2s; display: flex; align-items: center; gap: 6px; }
+        .btn-outline { background: transparent; border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: #ebf5fb; }
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #1a5276; }
+        .btn-add { background: #e8f6f3; color: #16a085; border: 1px dashed #16a085; width: 100%; justify-content: center; margin-top: 10px; padding: 10px; }
+        .btn-add:hover { background: #d1f2eb; }
+
+        /* --- MAIN LAYOUT --- */
+        .main-container { display: flex; height: calc(100vh - 70px); }
+
+        /* --- LEFT: EDITOR PANEL --- */
+        .editor-panel { 
+            width: 35%; background: #fff; overflow-y: auto; padding: 30px; border-right: 1px solid var(--border-color); 
+        }
+        
+        .section-header { margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; color: var(--primary); font-family: 'Merriweather', serif; font-size: 1.1rem; margin-top: 30px; }
+        .section-header:first-child { margin-top: 0; }
+
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 0.8rem; font-weight: 600; color: #555; margin-bottom: 5px; text-transform: uppercase; }
+        .form-control { 
+            width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 0.9rem; font-family: inherit; transition: 0.3s; 
+        }
+        .form-control:focus { border-color: var(--accent); outline: none; }
+        textarea.form-control { resize: vertical; min-height: 80px; }
+
+        /* DYNAMIC BLOCK STYLING */
+        .dynamic-block {
+            background: #fafafa; border: 1px solid #eee; padding: 15px; border-radius: 8px; margin-bottom: 15px; position: relative;
+        }
+        .delete-btn {
+            position: absolute; top: 10px; right: 10px; color: var(--delete-color); cursor: pointer; font-size: 0.9rem; background: white; padding: 5px; border-radius: 50%; border: 1px solid #eee;
+        }
+        .delete-btn:hover { background: var(--delete-color); color: white; }
+
+        /* Skill Chips */
+        .chips-container { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+        .chip-selected { background: var(--primary); color: white; padding: 5px 12px; border-radius: 15px; font-size: 0.8rem; display: flex; align-items: center; gap: 5px; }
+        .chip-close { cursor: pointer; }
+
+        /* --- RIGHT: PREVIEW PANEL --- */
+        .preview-area { 
+            width: 65%; background: #525659; padding: 40px; display: flex; justify-content: center; overflow-y: auto; 
+        }
+
+        /* --- BASE RESUME PAPER --- */
+        .resume-paper {
+            background: white; width: 210mm; min-height: 297mm; 
+            box-shadow: 0 0 15px rgba(0,0,0,0.3); color: #333; position: relative;
+            /* Default Font */
+            font-family: 'Open Sans', sans-serif;
+        }
+
+        /* ========================================= */
+        /* TEMPLATE STYLES (THE MAGIC)      */
+        /* ========================================= */
+
+        /* 1. MODERN (Sidebar Style - LinkedIn Look) */
+        .template-modern { display: flex; }
+        .template-modern .cv-sidebar { width: 32%; background: #2c3e50; color: white; padding: 30px 20px; text-align: left; }
+        .template-modern .cv-main { width: 68%; padding: 40px 30px; }
+        
+        .template-modern .res-name { font-family: 'Merriweather', serif; font-size: 2.2rem; font-weight: 700; text-transform: uppercase; color: #2c3e50; line-height: 1.1; }
+        .template-modern .res-role { color: #3498db; font-weight: 600; font-size: 1.1rem; margin-top: 5px; text-transform: uppercase; }
+        
+        .template-modern .sidebar-header { color: #3498db; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid rgba(255,255,255,0.2); margin-bottom: 15px; padding-bottom: 5px; margin-top: 25px; }
+        .template-modern .contact-item { font-size: 0.85rem; margin-bottom: 10px; display: flex; align-items: center; gap: 10px; word-break: break-all; }
+        .template-modern .contact-item i { color: #3498db; width: 15px; }
+        
+        .template-modern .section-title { font-family: 'Merriweather', serif; font-size: 1.1rem; font-weight: 700; color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 5px; margin-top: 30px; margin-bottom: 15px; }
+        
+        /* 2. CLASSIC (ATS King - Simple, Single Column) */
+        .template-classic { padding: 50px; font-family: 'Times New Roman', serif; }
+        .template-classic .res-header { text-align: center; border-bottom: 1px solid #000; padding-bottom: 20px; margin-bottom: 20px; }
+        .template-classic .res-name { font-size: 2.5rem; color: #000; text-transform: uppercase; }
+        .template-classic .res-contact { justify-content: center; display: flex; gap: 15px; font-size: 1rem; margin-top: 10px; }
+        .template-classic .section-title { font-size: 1.2rem; font-weight: bold; text-transform: uppercase; border-bottom: 1px solid #ccc; margin-top: 20px; margin-bottom: 10px; }
+        
+        /* 3. MINIMALIST (Clean Sans Serif, No Lines) */
+        .template-minimal { padding: 60px; font-family: 'Roboto', sans-serif; }
+        .template-minimal .res-header { margin-bottom: 40px; }
+        .template-minimal .res-name { font-size: 3rem; font-weight: 300; letter-spacing: 2px; }
+        .template-minimal .res-role { font-size: 1rem; letter-spacing: 3px; text-transform: uppercase; color: #7f8c8d; margin-top: 5px; }
+        .template-minimal .res-contact { margin-top: 15px; font-size: 0.9rem; color: #7f8c8d; display: flex; gap: 20px; }
+        .template-minimal .section-title { font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #95a5a6; margin-top: 30px; margin-bottom: 15px; }
+        
+        /* 4. PROFESSIONAL (Bold Header Bar) */
+        .template-prof { padding: 0; display: block; font-family: 'Lato', sans-serif; }
+        .template-prof .top-bar { background: #2c3e50; color: white; padding: 40px 50px; }
+        .template-prof .res-name { font-size: 2.8rem; font-weight: 700; }
+        .template-prof .res-role { font-size: 1.2rem; color: #ecf0f1; font-weight: 300; }
+        .template-prof .main-body { padding: 40px 50px; }
+        .template-prof .res-contact { background: #f8f9fa; padding: 15px; margin-bottom: 30px; display: flex; gap: 20px; font-size: 0.9rem; border-left: 5px solid #2c3e50; }
+        .template-prof .section-title { font-size: 1.3rem; font-weight: 700; color: #2c3e50; margin-top: 30px; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .template-prof .section-title::after { content: ''; flex: 1; height: 2px; background: #eee; }
+
+        /* Common Element Styles */
+        .res-block { margin-bottom: 15px; }
+        .res-block-header { display: flex; justify-content: space-between; align-items: baseline; font-weight: bold; }
+        .res-company { font-style: italic; color: #555; font-size: 0.95rem; }
+        .res-date { font-size: 0.9rem; color: #666; font-weight: normal; }
+        .res-desc li { font-size: 0.95rem; line-height: 1.5; margin-bottom: 4px; }
+        
+        .skill-tag { display: inline-block; padding: 3px 8px; margin: 2px; background: #eee; border-radius: 4px; font-size: 0.85rem; }
+        
+        /* Sidebar specific skill tag override */
+        .template-modern .skill-tag { background: rgba(255,255,255,0.1); color: white; }
+
+        /* --- ATS MODAL --- */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(2px); }
+        .modal-card { background: white; width: 400px; padding: 30px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; position: relative; }
+        .score-dial { width: 100px; height: 100px; border-radius: 50%; border: 8px solid #f0f0f0; margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: bold; color: var(--primary); }
+        .score-dial.high { border-color: #27ae60; color: #27ae60; }
+        .score-dial.med { border-color: #f39c12; color: #f39c12; }
+        .score-dial.low { border-color: #c0392b; color: #c0392b; }
+        .ats-list { text-align: left; margin-top: 15px; font-size: 0.9rem; list-style: none; }
+        .ats-list li { margin-bottom: 8px; }
+        
+        /* PRINT */
+        @media print {
+            .editor-header, .editor-panel, .modal-overlay { display: none !important; }
+            .main-container { height: auto; display: block; }
+            .preview-area { width: 100%; padding: 0; background: white; overflow: visible; }
+            .resume-paper { box-shadow: none; padding: 0; margin: 0; width: 100%; min-height: auto; }
+            body { background: white; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="editor-header">
+        <a href="index.html" class="brand">Path<span>Finder</span> CV</a>
+        
+        <div class="template-selector">
+            <button class="tpl-btn active" onclick="setTemplate('modern')">Modern</button>
+            <button class="tpl-btn" onclick="setTemplate('classic')">Classic</button>
+            <button class="tpl-btn" onclick="setTemplate('minimal')">Minimal</button>
+            <button class="tpl-btn" onclick="setTemplate('prof')">Professional</button>
+        </div>
+
+        <div class="actions">
+            <button class="btn btn-outline" onclick="checkATS()"><i class="fas fa-check-circle"></i> ATS Score</button>
+            <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-download"></i> PDF</button>
+        </div>
+    </header>
+
+    <div class="main-container">
+        
+        <div class="editor-panel">
+            
+            <div class="section-header">Personal Details</div>
+            <div class="form-group">
+                <label>Full Name</label>
+                <input type="text" class="form-control" id="inpName" placeholder="Diya Agarwal" onkeyup="render()">
+            </div>
+            <div class="form-group">
+                <label>Job Title</label>
+                <input type="text" class="form-control" id="inpRole" placeholder="Retail Sales Associate" onkeyup="render()">
+            </div>
+            <div class="form-group">
+                <label>Contact Info</label>
+                <input type="text" class="form-control" id="inpPhone" placeholder="+91-9876543210" onkeyup="render()">
+                <input type="text" class="form-control" id="inpEmail" placeholder="diya@example.in" style="margin-top:5px;" onkeyup="render()">
+                <input type="text" class="form-control" id="inpLoc" placeholder="New Delhi, India" style="margin-top:5px;" onkeyup="render()">
+                <input type="text" class="form-control" id="inpLink" placeholder="LinkedIn URL" style="margin-top:5px;" onkeyup="render()">
+            </div>
+            
+            <div class="section-header">Summary</div>
+            <textarea class="form-control" id="inpSummary" placeholder="Brief professional summary..." onkeyup="render()"></textarea>
+
+            <div class="section-header">Key Projects</div>
+            <div id="projContainer"></div>
+            <button class="btn btn-add" onclick="addProjBlock()"><i class="fas fa-plus"></i> Add Project</button>
+
+            <div class="section-header">Experience</div>
+            <div id="expContainer"></div>
+            <button class="btn btn-add" onclick="addExpBlock()"><i class="fas fa-plus"></i> Add Experience</button>
+
+            <div class="section-header">Education</div>
+            <div id="eduContainer"></div>
+            <button class="btn btn-add" onclick="addEduBlock()"><i class="fas fa-plus"></i> Add Education</button>
+
+            <div class="section-header">Skills</div>
+            <div class="form-group">
+                <div style="display:flex; gap:5px;">
+                    <input type="text" class="form-control" id="skillInput" placeholder="Add Skill & Enter" onkeypress="addSkill(event)">
+                </div>
+                <div id="selectedSkills" class="chips-container"></div>
+            </div>
+
+        </div>
+
+        <div class="preview-area">
+            <div class="resume-paper template-modern" id="cvTemplate">
+                </div>
+        </div>
+    </div>
+
+    <div id="atsModal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 style="margin-bottom:20px; color:var(--primary);">ATS Analysis</h2>
+            <div id="atsScore" class="score-dial">0%</div>
+            <ul id="atsFeedback" class="ats-list"></ul>
+            <button class="btn btn-primary" style="width:100%; justify-content:center; margin-top:15px;" onclick="document.getElementById('atsModal').style.display='none'">Back to Editor</button>
+        </div>
+    </div>
+
+    <script>
+        let currentTemplate = 'modern';
+        let skills = ["Sales Expertise", "POS Systems", "Teamwork"];
+
+        // --- INIT ---
+        window.onload = function() {
+            addEduBlock();
+            addExpBlock();
+            renderSkills();
+            render();
+        };
+
+        // --- TEMPLATE SWITCHER ---
+        function setTemplate(tpl) {
+            currentTemplate = tpl;
+            
+            // Update Buttons
+            document.querySelectorAll('.tpl-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            // Update Class
+            const paper = document.getElementById('cvTemplate');
+            paper.className = `resume-paper template-${tpl}`;
+            
+            render(); // Re-render content structure
+        }
+
+        // --- RENDER ENGINE ---
+        function render() {
+            const data = {
+                name: document.getElementById('inpName').value || "Rahul Verma",
+                role: document.getElementById('inpRole').value || "Business Analyst",
+                phone: document.getElementById('inpPhone').value || "+91 98765 43210",
+                email: document.getElementById('inpEmail').value || "rahul@email.com",
+                loc: document.getElementById('inpLoc').value || "Mumbai, India",
+                link: document.getElementById('inpLink').value || "linkedin.com/in/rahul",
+                summary: document.getElementById('inpSummary').value || "Experienced professional with a proven track record...",
+            };
+
+            const container = document.getElementById('cvTemplate');
+            
+            // HTML GENERATION BASED ON TEMPLATE TYPE
+            if (currentTemplate === 'modern') {
+                container.innerHTML = `
+                    <div class="cv-sidebar">
+                        <div style="text-align:center; margin-bottom:20px;">
+                            <div style="width:80px; height:80px; background:#fff; color:#2c3e50; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:2rem; font-weight:bold; margin:0 auto;">${data.name.charAt(0)}</div>
+                        </div>
+                        <div class="sidebar-header">Contact</div>
+                        <div class="contact-item"><i class="fas fa-phone"></i> ${data.phone}</div>
+                        <div class="contact-item"><i class="fas fa-envelope"></i> ${data.email}</div>
+                        <div class="contact-item"><i class="fas fa-map-marker-alt"></i> ${data.loc}</div>
+                        
+                        <div class="sidebar-header">Skills</div>
+                        <div>${getSkillsHTML()}</div>
+
+                        <div class="sidebar-header">Education</div>
+                        <div>${getEduHTML(true)}</div>
+                    </div>
+                    <div class="cv-main">
+                        <div class="res-name">${data.name}</div>
+                        <div class="res-role">${data.role}</div>
+                        <div class="section-title">Professional Summary</div>
+                        <p style="font-size:0.95rem; line-height:1.6;">${data.summary}</p>
+                        
+                        <div class="section-title">Experience</div>
+                        <div>${getExpHTML()}</div>
+
+                        <div class="section-title">Projects</div>
+                        <div>${getProjHTML()}</div>
+                    </div>
+                `;
+            } 
+            else if (currentTemplate === 'prof') {
+                container.innerHTML = `
+                    <div class="top-bar">
+                        <div class="res-name">${data.name}</div>
+                        <div class="res-role">${data.role}</div>
+                    </div>
+                    <div class="main-body">
+                        <div class="res-contact">
+                            <span><i class="fas fa-phone"></i> ${data.phone}</span>
+                            <span><i class="fas fa-envelope"></i> ${data.email}</span>
+                            <span><i class="fas fa-map-marker-alt"></i> ${data.loc}</span>
+                        </div>
+                        
+                        <div class="section-title">Summary</div>
+                        <p>${data.summary}</p>
+
+                        <div class="section-title">Experience</div>
+                        ${getExpHTML()}
+
+                        <div class="section-title">Education</div>
+                        ${getEduHTML(false)}
+
+                        <div class="section-title">Skills</div>
+                        ${getSkillsHTML()}
+                    </div>
+                `;
+            }
+            else {
+                // CLASSIC & MINIMAL (Single Column)
+                container.innerHTML = `
+                    <div class="res-header">
+                        <div class="res-name">${data.name}</div>
+                        <div class="res-role">${data.role}</div>
+                        <div class="res-contact">
+                            <span>${data.phone}</span> | <span>${data.email}</span> | <span>${data.loc}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="section-title">Summary</div>
+                    <p style="font-size:0.95rem;">${data.summary}</p>
+
+                    <div class="section-title">Experience</div>
+                    ${getExpHTML()}
+
+                    <div class="section-title">Projects</div>
+                    ${getProjHTML()}
+
+                    <div class="section-title">Education</div>
+                    ${getEduHTML(false)}
+
+                    <div class="section-title">Skills</div>
+                    <div>${getSkillsHTML()}</div>
+                `;
+            }
+        }
+
+        // --- HELPER FUNCTIONS FOR HTML GENERATION ---
+        function getSkillsHTML() {
+            return skills.map(s => `<span class="skill-tag">${s}</span>`).join('');
+        }
+
+        function getEduHTML(isSidebar) {
+            let html = '';
+            document.querySelectorAll('#eduContainer .dynamic-block').forEach(block => {
+                const deg = block.querySelector('.edu-deg').value || 'Degree';
+                const clg = block.querySelector('.edu-clg').value || 'College';
+                const yr = block.querySelector('.edu-yr').value || 'Year';
+                
+                html += `<div style="margin-bottom:10px;">
+                    <div style="font-weight:700; font-size:${isSidebar ? '0.95rem' : '1rem'}">${deg}</div>
+                    <div style="font-size:0.85rem; opacity:0.8;">${clg}</div>
+                    <div style="font-size:0.8rem; font-style:italic;">${yr}</div>
+                </div>`;
+            });
+            return html;
+        }
+
+        function getExpHTML() {
+            let html = '';
+            document.querySelectorAll('#expContainer .dynamic-block').forEach(block => {
+                const role = block.querySelector('.exp-role').value || 'Job Role';
+                const comp = block.querySelector('.exp-comp').value || 'Company';
+                const date = block.querySelector('.exp-date').value || 'Date';
+                const desc = formatList(block.querySelector('.exp-desc').value);
+                
+                html += `<div class="res-block">
+                    <div class="res-block-header">
+                        <span>${role}</span>
+                        <span class="res-date">${date}</span>
+                    </div>
+                    <div class="res-company">${comp}</div>
+                    <ul class="res-list">${desc}</ul>
+                </div>`;
+            });
+            return html;
+        }
+
+        function getProjHTML() {
+            let html = '';
+            document.querySelectorAll('#projContainer .dynamic-block').forEach(block => {
+                const title = block.querySelector('.proj-title').value || 'Project Name';
+                const tech = block.querySelector('.proj-tech').value || 'Tech Stack';
+                const desc = formatList(block.querySelector('.proj-desc').value);
+                
+                html += `<div class="res-block">
+                    <div class="res-block-header">
+                        <span>${title}</span>
+                    </div>
+                    <div class="res-company">${tech}</div>
+                    <ul class="res-list">${desc}</ul>
+                </div>`;
+            });
+            return html;
+        }
+
+        function formatList(text) {
+            if(!text) return '<li>Description point...</li>';
+            return text.split('\n').map(line => `<li>${line.replace(/•/g, '').trim()}</li>`).join('');
+        }
+
+        // --- DYNAMIC BLOCK MANAGERS ---
+        function addEduBlock() { createBlock('eduContainer', `
+            <input type="text" class="form-control edu-deg" placeholder="Degree" onkeyup="render()">
+            <input type="text" class="form-control edu-clg" placeholder="College" onkeyup="render()">
+            <input type="text" class="form-control edu-yr" placeholder="Year" onkeyup="render()">
+        `); }
+
+        function addExpBlock() { createBlock('expContainer', `
+            <input type="text" class="form-control exp-role" placeholder="Job Title" onkeyup="render()">
+            <input type="text" class="form-control exp-comp" placeholder="Company" onkeyup="render()">
+            <input type="text" class="form-control exp-date" placeholder="Date" onkeyup="render()">
+            <textarea class="form-control exp-desc" placeholder="• Bullet points..." onkeyup="render()"></textarea>
+        `); }
+
+        function addProjBlock() { createBlock('projContainer', `
+            <input type="text" class="form-control proj-title" placeholder="Project Name" onkeyup="render()">
+            <input type="text" class="form-control proj-tech" placeholder="Tech Stack" onkeyup="render()">
+            <textarea class="form-control proj-desc" placeholder="• Description..." onkeyup="render()"></textarea>
+        `); }
+
+        function createBlock(containerId, innerHTML) {
+            const id = Date.now();
+            const div = document.createElement('div');
+            div.className = 'dynamic-block';
+            div.id = id;
+            div.innerHTML = `<i class="fas fa-trash delete-btn" onclick="removeBlock('${id}')"></i>` + innerHTML;
+            document.getElementById(containerId).appendChild(div);
+        }
+
+        function removeBlock(id) { document.getElementById(id).remove(); render(); }
+
+        // --- SKILL LOGIC ---
+        function addSkill(e) {
+            if(e.key === 'Enter') {
+                const val = e.target.value.trim();
+                if(val && !skills.includes(val)) { skills.push(val); renderSkills(); e.target.value = ''; }
+            }
+        }
+        function removeSkill(s) { skills = skills.filter(k => k !== s); renderSkills(); }
+        function renderSkills() {
+            document.getElementById('selectedSkills').innerHTML = skills.map(s => `<span class="chip-selected">${s} <i class="fas fa-times chip-close" onclick="removeSkill('${s}')"></i></span>`).join('');
+            render();
+        }
+
+        // --- ATS CHECKER ---
+        function checkATS() {
+            let score = 0; let fb = [];
+            if(document.getElementById('inpName').value) score += 10;
+            if(document.getElementById('inpSummary').value.length > 50) { score += 20; fb.push("✅ Summary good length"); } 
+            else fb.push("❌ Summary too short");
+            if(skills.length >= 4) { score += 20; fb.push("✅ Skills added"); } else fb.push("❌ Add more skills");
+            
+            const expDesc = document.querySelector('.exp-desc');
+            if(expDesc && expDesc.value.length > 10) { score += 30; fb.push("✅ Experience detailed"); } 
+            else fb.push("⚠️ Experience missing details");
+
+            document.getElementById('atsScore').innerText = score + '%';
+            document.getElementById('atsScore').className = `score-dial ${score > 70 ? 'high' : score > 40 ? 'med' : 'low'}`;
+            document.getElementById('atsFeedback').innerHTML = fb.map(i => `<li>${i}</li>`).join('');
+            document.getElementById('atsModal').style.display = 'flex';
+        }
+    </script>
+
+</body>
+</html>
