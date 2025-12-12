@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PathFinder | AI Career & Business Engine</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --primary: #0A2647;      /* Deep Blue */
+            --secondary: #176B87;    /* Teal */
+            --accent: #FF9F29;       /* Orange */
+            --light-bg: #F0F4F8;     /* Soft GreyBlue */
+            --white: #ffffff;
+            --dark: #222222;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; scroll-behavior: smooth; }
+        
+        body { background: var(--white); color: var(--dark); overflow-x: hidden; }
+        
+        a { text-decoration: none; transition: 0.3s; color: inherit; }
+        ul { list-style: none; }
+        
+        .container { width: 92%; max-width: 1200px; margin: auto; }
+
+        /* --- ANIMATIONS --- */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .reveal {
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 0.8s ease-out;
+        }
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- HEADER 1: GLOBAL (White) --- */
+        .global-header {
+            background: var(--white);
+            padding: 12px 0;
+            border-bottom: 1px solid #ddd;
+            position: relative;
+            z-index: 1002;
+        }
+        .gh-flex { display: flex; justify-content: space-between; align-items: center; }
+        
+        .logo { font-size: 1.6rem; font-weight: 800; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .logo span { color: var(--accent); }
+        
+        .gh-links { display: flex; gap: 25px; }
+        .gh-links a { font-weight: 500; color: #555; font-size: 0.95rem; position: relative; }
+        .gh-links a:hover { color: var(--secondary); }
+        
+        /* Updated Auth Section Styling */
+        .gh-auth { display: flex; align-items: center; gap: 20px; }
+        .gh-auth a.simple-link { font-weight: 600; color: var(--primary); font-size: 0.95rem; }
+        .auth-separator { width: 1px; height: 20px; background: #ccc; }
+
+        /* IMPROVED DASHBOARD BUTTON STYLE */
+        .dashboard-btn {
+            border: 2px solid var(--primary);
+            color: var(--primary);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+            background: transparent;
+        }
+
+        .dashboard-btn:hover {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 5px 15px rgba(10, 38, 71, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* --- HEADER 2: STICKY (Blue) --- */
+        .sticky-header {
+            background: var(--primary);
+            color: var(--white);
+            height: 60px;
+            position: sticky;
+            top: 0;
+            z-index: 1001;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .sh-flex { display: flex; justify-content: space-between; align-items: center; height: 100%; }
+        
+        .sh-left { display: flex; align-items: center; height: 100%; overflow: hidden; }
+
+        .nav-pill { 
+            background: rgba(0,0,0,0.2); height: 60px; display: flex; align-items: center; padding: 0 20px; 
+            font-weight: 700; margin-right: 15px; border-right: 1px solid rgba(255,255,255,0.1); 
+            font-size: 0.9rem; white-space: nowrap;
+        }
+        
+        .sh-links { display: flex; align-items: center; }
+        .sh-links a { color: rgba(255,255,255,0.85); margin-right: 18px; font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
+        .sh-links a:hover { color: var(--white); text-decoration: underline; }
+
+        .ai-zone { display: flex; gap: 10px; align-items: center; }
+        .search-bar { background: rgba(255,255,255,0.1); padding: 5px 12px; border-radius: 4px; display: flex; align-items: center; border: 1px solid rgba(255,255,255,0.2); }
+        .search-bar input { background: transparent; border: none; color: white; outline: none; width: 140px; font-size: 0.9rem; }
+        .search-bar input::placeholder { color: rgba(255,255,255,0.6); }
+        
+        .ai-btn {
+            background: linear-gradient(135deg, var(--accent), #ff7b00); color: white; border: none; padding: 6px 16px; border-radius: 50px;
+            font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 0.9rem;
+            box-shadow: 0 0 10px rgba(255,159,41,0.4); transition: 0.4s; white-space: nowrap;
+        }
+        .ai-btn:hover { transform: scale(1.05); }
+
+        /* --- HERO --- */
+        .hero {
+            background: linear-gradient(rgba(10,38,71,0.9), rgba(23,107,135,0.8)), url('https://source.unsplash.com/1600x900/?technology,city');
+            background-size: cover; background-attachment: fixed;
+            height: 90vh; display: flex; align-items: center; justify-content: center; text-align: center; color: var(--white);
+            position: relative; overflow: hidden;
+        }
+        .hero-content h1 { font-size: 3.5rem; margin-bottom: 20px; font-weight: 700; line-height: 1.2; }
+        .hero-content p { font-size: 1.2rem; margin-bottom: 30px; opacity: 0.9; max-width: 700px; margin-left: auto; margin-right: auto; }
+        .typing-text::after { content: '|'; animation: blink 1s infinite; }
+        @keyframes blink { 50% { opacity: 0; } }
+
+        .cta-btn {
+            padding: 15px 40px; background: var(--white); color: var(--primary); font-size: 1.1rem; font-weight: 700;
+            border-radius: 5px; transition: 0.3s; display: inline-block; cursor: pointer; border: none;
+        }
+        .cta-btn:hover { background: var(--accent); color: var(--white); transform: translateY(-3px); }
+
+        /* --- STATS BAR --- */
+        .stats-bar {
+            background: var(--white); padding: 40px 0; margin-top: -50px; position: relative; z-index: 10;
+            border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 85%; margin-left: auto; margin-right: auto;
+            display: flex; justify-content: space-around; flex-wrap: wrap; text-align: center;
+            cursor: pointer; transition: transform 0.3s ease;
+        }
+        .stats-bar:hover { transform: translateY(-5px); }
+        .stat-item h3 { font-size: 2.5rem; color: var(--secondary); margin-bottom: 5px; }
+
+        /* --- SECTIONS --- */
+        .section { padding: 5rem 0; }
+        .bg-grey { background: var(--light-bg); }
+        .section-title { text-align: center; font-size: 2.2rem; color: var(--primary); margin-bottom: 3rem; position: relative; }
+        .section-title::after { content:''; display: block; width: 60px; height: 4px; background: var(--accent); margin: 15px auto 0; border-radius: 2px; }
+
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 30px; }
+        .feature-card {
+            background: var(--white); padding: 30px; border-radius: 15px; border-top: 5px solid var(--secondary);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05); transition: 0.4s; position: relative; overflow: hidden;
+        }
+        .feature-card:hover { transform: translateY(-15px); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        .icon-box {
+            width: 70px; height: 70px; background: #eef7fa; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; color: var(--secondary); margin-bottom: 20px; transition: 0.4s;
+        }
+        .feature-card:hover .icon-box { background: var(--secondary); color: var(--white); transform: rotateY(180deg); }
+
+        /* --- AI SECTION --- */
+        .ai-section { display: flex; align-items: center; gap: 50px; padding: 6rem 0; }
+        .ai-text { flex: 1; }
+        .ai-image { flex: 1; text-align: center; }
+        .ai-image img { width: 100%; max-width: 500px; animation: float 6s ease-in-out infinite; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); }
+        .feature-list li { margin-bottom: 15px; display: flex; align-items: center; gap: 10px; font-size: 1.1rem; }
+        .feature-list i { color: var(--accent); }
+
+        /* --- FOOTER --- */
+        footer { background: var(--primary); color: #bbb; padding: 4rem 0 2rem; }
+        .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 40px; margin-bottom: 40px; }
+        .footer h4 { color: white; margin-bottom: 20px; font-size: 1.2rem; }
+        .footer a { display: block; margin-bottom: 10px; }
+        .footer a:hover { color: var(--accent); padding-left: 5px; }
+
+        /* --- MODAL --- */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000;
+            display: none; align-items: center; justify-content: center; backdrop-filter: blur(5px);
+        }
+        .modal-box {
+            background: white; width: 90%; max-width: 500px; padding: 40px; border-radius: 20px; position: relative; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); animation: slideUp 0.4s ease;
+        }
+        @keyframes slideUp { from {transform: translateY(50px); opacity:0;} to {transform: translateY(0); opacity:1;} }
+        .close-btn { position: absolute; top: 15px; right: 20px; font-size: 2rem; cursor: pointer; color: #aaa; }
+        .step { display: none; }
+        .active-step { display: block; }
+        .option-grid { display: grid; gap: 15px; margin-top: 25px; }
+        .option-btn { padding: 15px; border: 2px solid #eee; background: white; border-radius: 10px; font-size: 1.1rem; cursor: pointer; transition: 0.3s; font-weight: 600; color: var(--primary); text-align: left; }
+        .option-btn:hover { border-color: var(--accent); background: #fff8f0; transform: translateX(5px); }
+
+        /* --- CHAT --- */
+        .chat-widget {
+            position: fixed; bottom: 20px; right: 20px; width: 350px; height: 450px; background: white; border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 3000; display: none; flex-direction: column; overflow: hidden; border: 1px solid #eee;
+            animation: slideUp 0.3s ease;
+        }
+        .chat-header { background: var(--primary); color: white; padding: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: 600; }
+        .ai-avatar { width: 30px; height: 30px; background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+        .close-chat { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+        .chat-body { flex: 1; padding: 15px; overflow-y: auto; background: #f9f9f9; display: flex; flex-direction: column; gap: 10px; }
+        .message { max-width: 80%; padding: 10px 15px; border-radius: 10px; font-size: 0.9rem; line-height: 1.4; }
+        .bot-msg { background: white; align-self: flex-start; border: 1px solid #eee; color: #333; border-bottom-left-radius: 0; }
+        .user-msg { background: var(--secondary); color: white; align-self: flex-end; border-bottom-right-radius: 0; }
+        .chat-input-area { padding: 10px; border-top: 1px solid #eee; display: flex; gap: 10px; background: white; }
+        .chat-input-area input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 20px; outline: none; }
+        .chat-input-area button { background: var(--accent); color: white; border: none; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; }
+
+        @media (max-width: 1000px) {
+            .sh-links, .search-bar, .gh-links { display: none; }
+            .ai-section { flex-direction: column-reverse; }
+            .stats-bar { flex-direction: column; gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="global-header">
+        <div class="container gh-flex">
+            <a href="#" class="logo"><i class="fas fa-compass"></i> Path<span>Finder</span></a>
+            
+            <nav class="gh-links">
+                <a href="#">Home</a>
+                <a href="#">Salary Guide</a>
+                <a href="#">For Institutes</a>
+            </nav>
+
+            <div class="gh-auth">
+                <a href="login.html" class="simple-link">Sign In</a>
+                <div class="auth-separator"></div>
+                <a href="#" class="simple-link">Post a Job</a>
+                
+                <a href="dashboard.html" class="dashboard-btn">
+                    <i class="fas fa-user-circle"></i> Dashboard
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <nav class="sticky-header">
+        <div class="container sh-flex">
+            <div class="sh-left">
+                <div class="nav-pill">CAREER GUIDE</div>
+                <div class="sh-links">
+                    <a href="jobs.html">Finding a Job</a>
+                    <a href="resume.html">Resumes</a>
+                    <a href="interview.html">Interviewing</a>
+                    <a href="#">Start Business</a>
+                </div>
+            </div>
+            
+            <div class="ai-zone">
+                <div class="search-bar">
+                    <i class="fas fa-search" style="color:#aaa; margin-right:8px;"></i>
+                    <input type="text" placeholder="Search...">
+                </div>
+                <button class="ai-btn" onclick="toggleChat()"><i class="fas fa-robot"></i> Ask AI</button>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container hero-content">
+            <h1 class="reveal">Built for your <br><span class="typing-text" style="color:var(--accent);">Future.</span></h1>
+            <p class="reveal">The first platform that connects your Education, Budget, and Skills to generate a personalized roadmap for success.</p>
+            <div class="reveal">
+                <button class="cta-btn" onclick="openModal()">Get Started Free</button>
+            </div>
+        </div>
+    </section>
+
+    <div class="stats-bar reveal">
+        <div class="stat-item">
+            <h3>500+</h3>
+            <p>Career Paths</p>
+        </div>
+        <div class="stat-item">
+            <h3>₹0-50L</h3>
+            <p>Budget Planned</p>
+        </div>
+        <div class="stat-item">
+            <h3>10k+</h3>
+            <p>Active Users</p>
+        </div>
+        <div class="stat-item">
+            <h3>24/7</h3>
+            <p>AI Assistance</p>
+        </div>
+    </div>
+
+    <section class="section bg-grey">
+        <div class="container">
+            <h2 class="section-title reveal">Choose Your Track</h2>
+            <div class="card-grid">
+                
+                <div class="feature-card reveal">
+                    <div class="icon-box"><i class="fas fa-user-graduate"></i></div>
+                    <h3>For Students</h3>
+                    <p>Analysis of your 10th/12th marks to predict college admissions and stream selection.</p>
+                    <a href="#" style="color:var(--secondary); font-weight:700; margin-top:15px; display:block;">Explore Students &rarr;</a>
+                </div>
+
+                <div class="feature-card reveal">
+                    <div class="icon-box"><i class="fas fa-briefcase"></i></div>
+                    <h3>For Job Seekers</h3>
+                    <p>Govt vs Private job filtering based on your exact education level and skills.</p>
+                    <a href="#" style="color:var(--secondary); font-weight:700; margin-top:15px; display:block;">Find Jobs &rarr;</a>
+                </div>
+
+                <div class="feature-card reveal">
+                    <div class="icon-box"><i class="fas fa-rocket"></i></div>
+                    <h3>For Entrepreneurs</h3>
+                    <p>Input your capital (e.g. ₹50k) and get a list of viable business ideas and loan schemes.</p>
+                    <a href="#" style="color:var(--secondary); font-weight:700; margin-top:15px; display:block;">Start Business &rarr;</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="container ai-section">
+        <div class="ai-text reveal">
+            <span style="color:var(--accent); font-weight:700; letter-spacing:1px;">NEW FEATURE</span>
+            <h2 style="font-size:2.5rem; color:var(--primary); margin: 10px 0 20px;">Meet PathFinder AI</h2>
+            <p style="margin-bottom:20px; font-size:1.1rem; line-height:1.8;">
+                Building your own AI? Use our integrated logic engine to test career scenarios. 
+                Our AI doesn't just chat; it calculates probabilities based on real market data.
+            </p>
+            <ul class="feature-list">
+                <li><i class="fas fa-check-circle"></i> Instant Resume Analysis</li>
+                <li><i class="fas fa-check-circle"></i> Business Risk Calculator</li>
+                <li><i class="fas fa-check-circle"></i> Personalized Learning Roadmaps</li>
+            </ul>
+            <button class="ai-btn" style="margin-top:30px;" onclick="toggleChat()">Try AI Beta Now</button>
+        </div>
+        <div class="ai-image reveal">
+            <img src="https://images.unsplash.com/photo-1531746790731-6c087fecd65a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1000&q=80" alt="AI Technology">
+        </div>
+    </section>
+
+    <section class="section bg-grey">
+        <div class="container">
+            <h2 class="section-title reveal">How It Works</h2>
+            <div class="steps-container" style="display:flex; gap:20px; justify-content:space-between; text-align:center; flex-wrap:wrap;">
+                <div class="feature-card reveal" style="border:none; min-width:250px; flex:1;">
+                    <div class="icon-box" style="margin:auto; margin-bottom:20px;"><i class="fas fa-id-card"></i></div>
+                    <h4>01. Create Profile</h4>
+                    <p>Enter your education, skills, and budget.</p>
+                </div>
+                <div class="feature-card reveal" style="border:none; min-width:250px; flex:1;">
+                    <div class="icon-box" style="margin:auto; margin-bottom:20px;"><i class="fas fa-cogs"></i></div>
+                    <h4>02. AI Analysis</h4>
+                    <p>Our engine matches you with valid opportunities.</p>
+                </div>
+                <div class="feature-card reveal" style="border:none; min-width:250px; flex:1;">
+                    <div class="icon-box" style="margin:auto; margin-bottom:20px;"><i class="fas fa-trophy"></i></div>
+                    <h4>03. Get Roadmap</h4>
+                    <p>Follow the step-by-step guide to success.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer>
+        <div class="container footer-grid">
+            <div class="footer">
+                <a href="#" class="logo" style="color:white; margin-bottom:20px;"><i class="fas fa-compass"></i> PathFinder</a>
+                <p>Empowering the next generation with data-driven career choices.</p>
+            </div>
+            <div class="footer">
+                <h4>Platform</h4>
+                <a href="#">Browse Jobs</a>
+                <a href="#">Browse Business</a>
+                <a href="#">Mentors</a>
+            </div>
+            <div class="footer">
+                <h4>Resources</h4>
+                <a href="#">Blog</a>
+                <a href="#">Salary Guide</a>
+                <a href="#">Help Center</a>
+            </div>
+            <div class="footer">
+                <h4>Legal</h4>
+                <a href="#">Privacy</a>
+                <a href="#">Terms</a>
+                <a href="#">Security</a>
+            </div>
+        </div>
+        <div class="container" style="text-align:center; border-top:1px solid rgba(255,255,255,0.1); padding-top:20px;">
+            <p>&copy; 2025 PathFinder Inc. All rights reserved.</p>
+        </div>
+    </footer>
+
+
+    <div id="logicModal" class="modal-overlay">
+        <div class="modal-box">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            
+            <div id="step1" class="step active-step">
+                <h3>Let's find your path. Who are you?</h3>
+                <div class="option-grid">
+                    <button class="option-btn" onclick="nextStep(1, 'student')">🎓 Student</button>
+                    <button class="option-btn" onclick="nextStep(1, 'jobseeker')">💼 Job Seeker</button>
+                    <button class="option-btn" onclick="nextStep(1, 'business')">🚀 Entrepreneur</button>
+                </div>
+            </div>
+
+            <div id="step2-student" class="step">
+                <h3>What is your current level?</h3>
+                <div class="option-grid">
+                    <button class="option-btn" onclick="showResult('student-10')">10th Pass</button>
+                    <button class="option-btn" onclick="showResult('student-12')">12th Pass</button>
+                    <button class="option-btn" onclick="showResult('student-grad')">College Grad</button>
+                </div>
+            </div>
+
+            <div id="step2-business" class="step">
+                <h3>What is your investment capacity?</h3>
+                <div class="option-grid">
+                    <button class="option-btn" onclick="showResult('biz-low')">Under ₹50k</button>
+                    <button class="option-btn" onclick="showResult('biz-med')">₹50k - ₹5 Lakh</button>
+                    <button class="option-btn" onclick="showResult('biz-high')">Above ₹5 Lakh</button>
+                </div>
+            </div>
+
+            <div id="step3-result" class="step">
+                <h2 style="color:var(--secondary);">✨ Here is your Roadmap!</h2>
+                <div id="result-content" style="text-align: left; background: #f9f9f9; padding: 20px; border-radius: 10px; margin-top: 15px;">
+                    </div>
+                <button class="cta-btn" style="margin-top:20px; width:100%; text-align:center;" onclick="closeModal()">Close & Start</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="aiChatBox" class="chat-widget">
+        <div class="chat-header">
+            <div style="display:flex; align-items:center; gap:10px;">
+                <div class="ai-avatar"><i class="fas fa-robot"></i></div>
+                <span>PathFinder AI</span>
+            </div>
+            <button class="close-chat" onclick="toggleChat()">−</button>
+        </div>
+        
+        <div class="chat-body" id="chatBody">
+            <div class="message bot-msg">
+                Hello! I am your AI Career Assistant. Ask me anything like "How to start a business?" or "Best jobs after 12th?"
+            </div>
+        </div>
+
+        <div class="chat-input-area">
+            <input type="text" id="userInput" placeholder="Type your question..." onkeypress="handleEnter(event)">
+            <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+    </div>
+
+
+    <script>
+        // 1. Typing Effect Logic
+        const words = ["Dream.", "Reality.", "Future.", "Business."];
+        let i = 0;
+
+        function typeWriter() {
+            const span = document.querySelector('.typing-text');
+            if(!span) return;
+            span.innerHTML = words[i];
+            i = (i + 1) % words.length;
+        }
+        setInterval(typeWriter, 2000); 
+
+        // 2. Scroll Reveal Animation Logic
+        window.addEventListener('scroll', reveal);
+
+        function reveal() {
+            var reveals = document.querySelectorAll('.reveal');
+            for (var i = 0; i < reveals.length; i++) {
+                var windowheight = window.innerHeight;
+                var revealtop = reveals[i].getBoundingClientRect().top;
+                var revealpoint = 150;
+
+                if (revealtop < windowheight - revealpoint) {
+                    reveals[i].classList.add('active');
+                } else {
+                    reveals[i].classList.remove('active');
+                }
+            }
+        }
+        reveal(); // Trigger on load
+
+        // 3. LOGIC ENGINE (MODAL)
+        const modal = document.getElementById('logicModal');
+
+        function openModal() {
+            modal.style.display = 'flex';
+            resetModal();
+        }
+
+        function closeModal() {
+            modal.style.display = 'none';
+        }
+
+        function resetModal() {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active-step'));
+            document.getElementById('step1').classList.add('active-step');
+        }
+
+        function nextStep(currentStep, selection) {
+            document.getElementById('step1').classList.remove('active-step');
+
+            if (selection === 'student') {
+                document.getElementById('step2-student').classList.add('active-step');
+            } else if (selection === 'business') {
+                document.getElementById('step2-business').classList.add('active-step');
+            } else {
+                // Default fallback
+                document.getElementById('step2-student').classList.add('active-step'); 
+            }
+        }
+
+        function showResult(type) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active-step'));
+            document.getElementById('step3-result').classList.add('active-step');
+
+            const resultBox = document.getElementById('result-content');
+            let htmlContent = '';
+
+            // LOGIC DATA
+            if(type === 'biz-low') {
+                htmlContent = `
+                    <h4>Recommended: Low Investment Biz</h4>
+                    <ul style="margin-top:10px; list-style:none;">
+                        <li style="margin-bottom:10px;">☕ <strong>Tea/Coffee Franchise:</strong> Starts at ₹20k. High daily cash flow.</li>
+                        <li style="margin-bottom:10px;">💻 <strong>Freelancing/Dropshipping:</strong> Cost ₹5k. Needs laptop & internet.</li>
+                        <li>📱 <strong>Mobile Repair Shop:</strong> Cost ₹40k. Requires short skill course.</li>
+                    </ul>
+                    <p style="margin-top:15px; font-size:0.9rem; color:green;">Eligible for: PM Mudra Shishu Loan (upto ₹50k)</p>
+                `;
+            } 
+            else if (type === 'biz-med') {
+                 htmlContent = `
+                    <h4>Recommended: Medium Investment</h4>
+                    <ul style="margin-top:10px; list-style:none;">
+                        <li style="margin-bottom:10px;">🍔 <strong>Cloud Kitchen:</strong> Starts at ₹2 Lakh. High demand on Swiggy/Zomato.</li>
+                        <li>👗 <strong>Garment Boutique:</strong> Starts at ₹1.5 Lakh. Good margins.</li>
+                    </ul>
+                `;
+            }
+            else if (type === 'student-12') {
+                htmlContent = `
+                    <h4>Options after 12th</h4>
+                    <ul style="margin-top:10px; list-style:none;">
+                        <li style="margin-bottom:10px;">🎓 <strong>College:</strong> List of Top Tier-2 Colleges generated based on marks.</li>
+                        <li>👮 <strong>Govt Job:</strong> Eligible for SSC CHSL & Police Constable exams.</li>
+                    </ul>
+                `;
+            }
+            else {
+                htmlContent = `<p>Data for this specific selection is being updated by our AI...</p>`;
+            }
+
+            resultBox.innerHTML = htmlContent;
+        }
+
+        // Close modal if clicked outside
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                closeModal();
+            }
+        }
+
+        // 4. AI CHATBOT LOGIC
+        function toggleChat() {
+            const chatBox = document.getElementById('aiChatBox');
+            if (chatBox.style.display === 'flex') {
+                chatBox.style.display = 'none';
+            } else {
+                chatBox.style.display = 'flex';
+            }
+        }
+
+        function sendMessage() {
+            const inputField = document.getElementById('userInput');
+            const message = inputField.value.trim();
+            if (message === "") return;
+
+            addMessage(message, 'user-msg');
+            inputField.value = '';
+
+            setTimeout(() => {
+                const aiResponse = generateAIResponse(message);
+                addMessage(aiResponse, 'bot-msg');
+            }, 1000);
+        }
+
+        function handleEnter(e) {
+            if (e.key === 'Enter') sendMessage();
+        }
+
+        function addMessage(text, className) {
+            const chatBody = document.getElementById('chatBody');
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${className}`;
+            msgDiv.innerText = text;
+            chatBody.appendChild(msgDiv);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        }
+
+        function generateAIResponse(input) {
+            input = input.toLowerCase();
+            if (input.includes('business') || input.includes('startup')) {
+                return "For business, first decide your budget. If it's low (under 50k), try freelancing or a food stall. If high, look into franchises.";
+            } 
+            else if (input.includes('job') || input.includes('salary')) {
+                return "To get a high salary job, focus on skills like Coding, Digital Marketing, or Data Science. Do you need course recommendations?";
+            }
+            else if (input.includes('hello') || input.includes('hi')) {
+                return "Hello! How can I help you build your career today?";
+            }
+            else if (input.includes('12th') || input.includes('student')) {
+                return "After 12th, you can choose Engineering, Medical, Arts, or Commerce. What is your favorite subject?";
+            }
+            else {
+                return "That's an interesting question. Our advanced AI is processing it... For now, please try asking about 'Jobs' or 'Business'.";
+            }
+        }
+    </script>
+
+</body>
+</html>
